@@ -1,0 +1,7 @@
+# Git tự chuẩn hóa xuống dòng cho file text, tránh diff "sửa cả file" do khác CRLF/LF giữa các máy
+* text=auto
+
+# Script Maven Wrapper: mvnw phải là LF (chạy trên Linux/macOS/CI), mvnw.cmd phải là CRLF (Windows)
+/mvnw text eol=lf
+*.cmd text eol=crlf
+*.sh  text eol=lf

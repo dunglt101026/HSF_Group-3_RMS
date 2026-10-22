@@ -1,0 +1,23 @@
+# =========================================================================
+# 🚨 TUYỆT ĐỐI KHÔNG ĐỔI TÊN (RENAME) FILE NÀY! 🚨
+# Hãy COPY file này ra một bản mới tên là 'application-local.properties'
+# Nếu bạn đổi tên, bạn sẽ xóa luôn file mẫu của cả team trên Git!
+# =========================================================================
+# File 'application-local.properties' chứa thiết lập máy cá nhân, đã được .gitignore bảo vệ.
+
+# --- 1. SERVER & PORT ---
+# Bỏ comment nếu muốn đổi port khác 8080 (ví dụ 8081, 8082)
+# server.port=8080
+
+# --- 2. CẤU HÌNH DATABASE LOCAL (MS SQL SERVER) ---
+# Tên database của nhóm (mặc định RMS_DB)
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=RMS_DB;encrypt=true;trustServerCertificate=true
+spring.datasource.username=sa
+# Điền mật khẩu sa máy của bạn vào đây:
+spring.datasource.password=your_password_here
+
+# --- 3. LOG SQL ---
+# Tắt log SQL nếu thấy rối:
+# logging.level.org.hibernate.SQL=INFO
+# Xem cả giá trị tham số (?) truyền vào câu SQL:
+# logging.level.org.hibernate.orm.jdbc.bind=TRACE
