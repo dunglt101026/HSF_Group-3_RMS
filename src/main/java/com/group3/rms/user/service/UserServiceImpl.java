@@ -1,0 +1,68 @@
+package com.group3.rms.user.service;
+
+import com.group3.rms.common.exception.BusinessException;
+import com.group3.rms.common.security.CurrentUser;
+import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.user.dto.LoginRequest;
+import com.group3.rms.user.dto.UserResponse;
+import com.group3.rms.user.entity.Role;
+import com.group3.rms.user.entity.RoleCode;
+import com.group3.rms.user.entity.User;
+import com.group3.rms.user.entity.UserStatus;
+import com.group3.rms.user.mapper.UserMapper;
+import com.group3.rms.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final CurrentUserService currentUserService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse login(LoginRequest request) {
+        String identifier = request.identifier().trim();
+        log.info("Xử lý đăng nhập cho: {}", identifier);
+
+        User user = userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(identifier, identifier)
+                .orElseThrow(() -> {
+                    log.warn("Đăng nhập thất bại: Không tìm thấy tài khoản '{}'", identifier);
+                    return new BusinessException("Tên đăng nhập hoặc mật khẩu không đúng.");
+                });
+
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.warn("Đăng nhập thất bại cho '{}': Mật khẩu không chính xác", identifier);
+            throw new BusinessException("Tên đăng nhập hoặc mật khẩu không đúng.");
+        }
+
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            log.warn("Đăng nhập bị từ chối cho '{}': Tài khoản INACTIVE", identifier);
+            throw new BusinessException("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.");
+        }
+
+        RoleCode primaryRole = user.getRoles().stream()
+                .findFirst()
+                .map(Role::getCode)
+                .orElse(RoleCode.CANDIDATE);
+
+        CurrentUser currentUser = new CurrentUser(
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                primaryRole
+        );
+        currentUserService.set(currentUser);
+
+        log.info("Người dùng '{}' đăng nhập thành công với vai trò {}", user.getUsername(), primaryRole);
+        return userMapper.toResponse(user);
+    }
+}

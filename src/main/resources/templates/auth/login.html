@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/auth}">
+<head>
+    <title>Đăng nhập</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="auth-card p-4 p-sm-5">
+            <!-- Header -->
+            <div class="auth-header">
+                <div class="logo-badge shadow-sm">
+                    <i class="bi bi-briefcase-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Đăng nhập RMS</h3>
+                <p class="text-muted small">Hệ thống quản lý tuyển dụng nội bộ</p>
+            </div>
+
+            <!-- Flash & Error alerts -->
+            <div th:replace="~{fragments/flash :: flash-messages}"></div>
+
+            <!-- Login Form -->
+            <form th:action="@{/login}" th:object="${form}" method="post" novalidate>
+                <!-- Tên đăng nhập hoặc Email -->
+                <div class="mb-3">
+                    <label for="identifier" class="form-label fw-semibold">Tên đăng nhập hoặc email <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                        <input type="text"
+                               id="identifier"
+                               th:field="*{identifier}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('identifier')} ? 'is-invalid' : ''"
+                               placeholder="Nhập username hoặc email..."
+                               autofocus required>
+                    </div>
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('identifier')}" th:errors="*{identifier}">
+                        Lỗi tên đăng nhập
+                    </div>
+                </div>
+
+                <!-- Mật khẩu kèm nút Hiện / Ẩn -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label for="password" class="form-label fw-semibold mb-1">Mật khẩu <span class="text-danger">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+                        <input type="password"
+                               id="password"
+                               th:field="*{password}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                               placeholder="Nhập mật khẩu..."
+                               required>
+                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn" title="Hiện / Ẩn mật khẩu">
+                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">
+                        Lỗi mật khẩu
+                    </div>
+                </div>
+
+                <!-- Nút Đăng nhập -->
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
+                </button>
+            </form>
+
+            <!-- Footer links -->
+            <div class="text-center mt-4 pt-3 border-top">
+                <p class="text-muted small mb-0">
+                    Chưa có tài khoản?
+                    <a th:href="@{/register}" class="fw-semibold text-decoration-none text-primary">Đăng ký ngay</a>
+                </p>
+                <div class="mt-2">
+                    <a th:href="@{/demo}" class="text-muted text-decoration-none small">
+                        <i class="bi bi-arrow-left"></i> Về trang kiểm tra hệ thống
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toggle Password Script -->
+    <th:block layout:fragment="scripts">
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const toggleBtn = document.getElementById('togglePasswordBtn');
+                const passwordInput = document.getElementById('password');
+                const toggleIcon = document.getElementById('togglePasswordIcon');
+
+                if (toggleBtn && passwordInput && toggleIcon) {
+                    toggleBtn.addEventListener('click', function () {
+                        const isPassword = passwordInput.getAttribute('type') === 'password';
+                        passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                        toggleIcon.classList.toggle('bi-eye', !isPassword);
+                        toggleIcon.classList.toggle('bi-eye-slash', isPassword);
+                    });
+                }
+            });
+        </script>
+    </th:block>
+</body>
+</html>
