@@ -10,6 +10,8 @@ public interface AdminUserService {
 
     Page<AdminUserSummaryResponse> searchUsers(String keyword, String role, String status, String page);
 
+    void checkAdminAccess();
+
     void checkCreatePermission();
 
     void checkAccountAvailability(String username, String email);

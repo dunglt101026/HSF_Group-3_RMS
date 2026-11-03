@@ -84,6 +84,11 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
+    public void checkAdminAccess() {
+        requireActiveAdmin();
+    }
+
+    @Override
     public void checkCreatePermission() {
         requireActiveAdmin();
     }
