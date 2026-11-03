@@ -89,14 +89,14 @@ src/test/java/com/group3/rms/<feature>/      test đặt theo đúng package
 1. Controller chỉ gọi Service. Không gọi Repository, không nhận/trả Entity.
 2. Đọc dữ liệu của feature khác: được dùng Repository của feature đó.
 3. Ghi hoặc đổi trạng thái dữ liệu của feature khác: **phải gọi Service** của feature sở hữu (để không ai bỏ qua quy tắc nghiệp vụ).
-4. Chỉ sửa file trong phạm vi chức năng đang làm. Các file dùng chung (mục 3) và entity cần đổi thì báo nhóm trước.
+4. Chỉ sửa file trong phạm vi chức năng hoặc việc chung đã được phân công. TV2 phụ trách `BaseEntity`, JPA Auditing trong `AppConfig` và exception handling; phối hợp TV1 khi nối `AuditorAware` với `CurrentUserService`. Các phần dùng chung khác (mục 3) và entity cần đổi thì báo nhóm / chủ file trước.
 
 ## 3. Các file dùng chung
 
 | File | Vai trò |
 | :--- | :--- |
 | `common/entity/BaseEntity` | `id` + 4 cột audit tự điền |
-| `common/config/AppConfig` | Mọi bean dùng chung: `@EnableJpaAuditing` + `AuditorAware` (lấy tên từ `CurrentUserService`), `PasswordEncoder` (BCrypt), sau thêm `@EnableScheduling` |
+| `common/config/AppConfig` | Mọi bean dùng chung: đã có `@EnableJpaAuditing(auditorAwareRef = "auditorAware")` + `AuditorAware<String>` hiện trả `system`; khi có `CurrentUserService` thì lấy username, chưa đăng nhập dùng `system`. Có `PasswordEncoder` (BCrypt), sau thêm `@EnableScheduling`; không tạo `JpaAuditingConfig` riêng |
 | `common/exception/*` | Ngoại lệ dùng chung và xử lý lỗi tập trung (mục 4) |
 | `audit/AuditLogService` | `log(action, targetType, targetId, detail)`; về sau có thể ghi tự động bằng AOP `@Audited` |
 | `common/security/CurrentUserService` | Người dùng đang đăng nhập |
@@ -131,7 +131,7 @@ public abstract class BaseEntity {
 }
 ```
 
-`users`, `jobs`, `applications`, `interviews` kế thừa `BaseEntity`. Bảng danh mục (`roles`, `departments`, `skills`), bảng nối và `audit_logs` tự khai báo `id`.
+`users`, `jobs`, `applications`, `interviews` kế thừa `BaseEntity` (`id` + 4 cột audit). `roles`, `departments`, `skills`, `audit_logs` có khóa chính `id` riêng. `user_roles` có khóa chính ghép `(user_id, role_id)`; `job_skills` có khóa chính ghép `(job_id, skill_id)`. Hai bảng nối không có cột `id` độc lập và vẫn ánh xạ qua `@ManyToMany`, không tạo entity mới. JPA Auditing qua `BaseEntity` chỉ áp dụng cho bốn bảng nghiệp vụ nêu trên.
 
 ```java
 public record CurrentUser(Long id, String username, String fullName, RoleCode role) {}
@@ -236,7 +236,7 @@ public class GlobalExceptionHandler {
 }
 ```
 
-- Quy tắc nghiệp vụ **luôn kiểm tra ở service**, kể cả khi giao diện đã ẩn nút. Ẩn nút chỉ để dễ dùng, không phải để bảo mật.
+- Phân quyền, trạng thái tài khoản, quyền sở hữu và quy tắc nghiệp vụ **luôn kiểm tra tại Service bằng dữ liệu hiện tại**, kể cả khi giao diện đã ẩn nút hoặc yêu cầu đến từ phiên cũ. Áp dụng cho cả người thực hiện và tài khoản / dữ liệu đích theo UC. Ẩn nút chỉ để dễ dùng, không phải để bảo mật.
 - Khi bật Spring Security: thêm `AccessDeniedException` của Spring Security vào nhóm 403, để handler `Exception` không biến nó thành 500.
 - `ApiExceptionHandler` đặt `@Order(Ordered.HIGHEST_PRECEDENCE)` và chỉ áp dụng cho `@RestController`.
 
@@ -294,3 +294,11 @@ public class GlobalExceptionHandler {
 | :--- | :--- |
 | Từ đầu | Mật khẩu băm BCrypt (chỉ thêm `spring-security-crypto`, chưa thêm `spring-boot-starter-security`); URL theo tiền tố vai trò ngay từ đầu (`/admin/**`, `/hr/**`, `/interviews/**`, `/my/**`; công khai `/`, `/jobs/**`); layout có sẵn thẻ `<meta>` CSRF; mọi thao tác đổi dữ liệu dùng POST; in dữ liệu bằng `th:text`; kiểm tra quyền sở hữu ở service (HR phụ trách, người phỏng vấn được giao, Candidate chủ hồ sơ); file CV lưu ngoài thư mục web, kiểm tra quyền trước khi tải |
 | Giai đoạn cuối | Spring Security: form login, phân quyền URL theo vai trò (`/admin/**`, `/hr/**`, `/interviews/**`, `/my/**`), CSRF, trang 403; thay `CurrentUserService` |
+
+Các ràng buộc quản trị trong đặc tả tại `docs/requirements/` phải được kiểm tra ở Service:
+
+- Toàn hệ thống có **duy nhất một tài khoản `ADMIN` được khởi tạo sẵn**, chính là Super Admin; không tạo role `SUPER_ADMIN`. Không tạo thêm ADMIN, nâng tài khoản khác lên ADMIN, khóa ADMIN hoặc đổi ADMIN sang vai trò khác. UC-07/08/09 không được thay đổi tài khoản ADMIN.
+- Chỉ Super Admin thực hiện UC-06–10. UC-07 chỉ tạo HR / INTERVIEWER ở trạng thái ACTIVE, giữ validation theo đặc tả và chỉ ghi `CREATE_ACCOUNT` khi thành công.
+- UC-08 cho khóa / mở khóa HR, INTERVIEWER, CANDIDATE; HR / INTERVIEWER còn công việc vẫn được khóa sau cảnh báo gián đoạn và xác nhận. Không tự chuyển giao, xóa hoặc thay đổi tin, hồ sơ, lịch phỏng vấn, lịch sử. INACTIVE không đăng nhập hoặc tiếp tục thao tác bằng phiên cũ; từ chối thao tác trùng trạng thái. Chỉ ghi `LOCK_ACCOUNT` / `UNLOCK_ACCOUNT` khi thành công.
+- UC-09 chỉ cho `HR ↔ INTERVIEWER`; ADMIN / CANDIDATE không tham gia theo bất kỳ chiều nào. Chặn HR → INTERVIEWER nếu còn tin phụ trách DRAFT / ACTIVE chưa xóa, hoặc tin CLOSED chưa xóa có hồ sơ APPLIED / INTERVIEW. INTERVIEWER → HR giữ nguyên lịch được giao và đánh giá, không tự hủy; quyền xử lý theo quy định hiện hành. Mỗi tài khoản đúng một role qua `user_roles`; chọn lại role hiện tại không cập nhật / ghi log. Chỉ ghi `CHANGE_ROLE` khi đổi thành công.
+- UC-10 chỉ Super Admin xem audit log, không sửa / xóa; nghiệp vụ UC-06 giữ nguyên.
