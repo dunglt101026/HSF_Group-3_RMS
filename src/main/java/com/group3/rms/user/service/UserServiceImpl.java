@@ -4,9 +4,11 @@ import com.group3.rms.audit.entity.AuditAction;
 import com.group3.rms.audit.entity.TargetType;
 import com.group3.rms.audit.service.AuditLogService;
 import com.group3.rms.common.exception.BusinessException;
+import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.LoginRequest;
+import com.group3.rms.user.dto.PasswordChangeRequest;
 import com.group3.rms.user.dto.RegisterRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.Role;
@@ -120,5 +122,44 @@ public class UserServiceImpl implements UserService {
 
         log.info("Tài khoản Candidate '{}' (ID={}) đã được tạo thành công", savedUser.getUsername(), savedUser.getId());
         return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(PasswordChangeRequest request) {
+        CurrentUser current = currentUserService.require();
+        log.info("Xử lý đổi mật khẩu cho user: '{}'", current.username());
+
+        User user = userRepository.findById(current.id())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy thông tin tài khoản."));
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            log.warn("Đổi mật khẩu thất bại cho '{}': Mật khẩu hiện tại không đúng", current.username());
+            throw new BusinessException("currentPassword", "Mật khẩu hiện tại không đúng.");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            log.warn("Đổi mật khẩu thất bại cho '{}': Mật khẩu mới trùng mật khẩu cũ", current.username());
+            throw new BusinessException("newPassword", "Mật khẩu mới không được trùng với mật khẩu hiện tại.");
+        }
+
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            log.warn("Đổi mật khẩu thất bại cho '{}': Mật khẩu xác nhận không khớp", current.username());
+            throw new BusinessException("confirmPassword", "Mật khẩu xác nhận không khớp.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        log.info("Người dùng '{}' (ID={}) đã đổi mật khẩu thành công", user.getUsername(), user.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUserProfile() {
+        CurrentUser current = currentUserService.require();
+        User user = userRepository.findById(current.id())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy thông tin tài khoản."));
+        return userMapper.toResponse(user);
     }
 }

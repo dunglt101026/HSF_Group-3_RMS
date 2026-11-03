@@ -71,6 +71,15 @@ class AuthControllerTest {
             }
             return responseToReturn;
         }
+
+        @Override
+        public void changePassword(com.group3.rms.user.dto.PasswordChangeRequest request) {
+        }
+
+        @Override
+        public UserResponse getCurrentUserProfile() {
+            return responseToReturn;
+        }
     }
 
     @BeforeEach

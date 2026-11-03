@@ -7,6 +7,7 @@ import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.LoginRequest;
+import com.group3.rms.user.dto.PasswordChangeRequest;
 import com.group3.rms.user.dto.RegisterRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.Role;
@@ -123,9 +124,18 @@ class UserServiceTest {
                         String email = (String) args[0];
                         return "hr1@rms.local".equalsIgnoreCase(email) || "candidate1@example.com".equalsIgnoreCase(email);
                     }
+                    if ("findById".equals(name)) {
+                        Long id = (Long) args[0];
+                        if (Long.valueOf(10L).equals(id)) {
+                            return Optional.of(existingUser);
+                        }
+                        return Optional.empty();
+                    }
                     if ("save".equals(name)) {
                         User userToSave = (User) args[0];
-                        ReflectionTestUtils.setField(userToSave, "id", 100L);
+                        if (userToSave.getId() == null) {
+                            ReflectionTestUtils.setField(userToSave, "id", 100L);
+                        }
                         return userToSave;
                     }
                     return null;
@@ -331,6 +341,68 @@ class UserServiceTest {
         );
 
         assertThatThrownBy(() -> userService.register(request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Mật khẩu xác nhận không khớp.")
+                .extracting(e -> ((BusinessException) e).getField())
+                .isEqualTo("confirmPassword");
+    }
+
+    /* =========================================================================
+     * UC-04: CHANGE PASSWORD TESTS
+     * ========================================================================= */
+
+    @Test
+    @DisplayName("UC-04: Đổi mật khẩu thành công khi thông tin hợp lệ")
+    void changePassword_Success_ShouldUpdatePasswordHash() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        PasswordChangeRequest request = new PasswordChangeRequest(
+                "Test@123", "NewSecret@456", "NewSecret@456"
+        );
+
+        userService.changePassword(request);
+
+        assertThat(existingUser.getPasswordHash()).isEqualTo("hashed_NewSecret@456");
+    }
+
+    @Test
+    @DisplayName("UC-04: Đổi mật khẩu thất bại do mật khẩu hiện tại không đúng")
+    void changePassword_WrongCurrentPassword_ShouldThrowBusinessException() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        PasswordChangeRequest request = new PasswordChangeRequest(
+                "WrongOldPassword", "NewSecret@456", "NewSecret@456"
+        );
+
+        assertThatThrownBy(() -> userService.changePassword(request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Mật khẩu hiện tại không đúng.")
+                .extracting(e -> ((BusinessException) e).getField())
+                .isEqualTo("currentPassword");
+    }
+
+    @Test
+    @DisplayName("UC-04: Đổi mật khẩu thất bại do mật khẩu mới trùng mật khẩu cũ")
+    void changePassword_NewPasswordSameAsOld_ShouldThrowBusinessException() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        PasswordChangeRequest request = new PasswordChangeRequest(
+                "Test@123", "Test@123", "Test@123"
+        );
+
+        assertThatThrownBy(() -> userService.changePassword(request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Mật khẩu mới không được trùng với mật khẩu hiện tại.")
+                .extracting(e -> ((BusinessException) e).getField())
+                .isEqualTo("newPassword");
+    }
+
+    @Test
+    @DisplayName("UC-04: Đổi mật khẩu thất bại do xác nhận mật khẩu không khớp")
+    void changePassword_PasswordMismatch_ShouldThrowBusinessException() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        PasswordChangeRequest request = new PasswordChangeRequest(
+                "Test@123", "NewSecret@456", "DifferentSecret@789"
+        );
+
+        assertThatThrownBy(() -> userService.changePassword(request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Mật khẩu xác nhận không khớp.")
                 .extracting(e -> ((BusinessException) e).getField())
