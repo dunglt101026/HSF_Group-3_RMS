@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/auth}">
+<head>
+    <title>Thông tin cá nhân</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="auth-card p-4 p-sm-5" style="max-width: 520px; margin: auto;">
+            <!-- Header -->
+            <div class="auth-header">
+                <div class="logo-badge shadow-sm" style="background-color: #0dcaf0;">
+                    <i class="bi bi-person-circle"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Thông tin cá nhân</h3>
+                <p class="text-muted small">Xem và cập nhật thông tin tài khoản của bạn</p>
+            </div>
+
+            <!-- Flash alerts -->
+            <div th:replace="~{fragments/flash :: flash-messages}"></div>
+
+            <!-- Form cập nhật thông tin cá nhân (UC-05) -->
+            <form th:action="@{/profile}" th:object="${form}" method="post" novalidate>
+                <!-- Thông tin chỉ đọc: Tên đăng nhập, Email, Vai trò -->
+                <div class="card border-0 bg-light p-3 mb-3 shadow-sm rounded-3">
+                    <div class="row mb-2">
+                        <div class="col-sm-4 text-muted small fw-semibold">Tên đăng nhập:</div>
+                        <div class="col-sm-8 font-monospace fw-bold" th:text="${user.username}">username</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-4 text-muted small fw-semibold">Email:</div>
+                        <div class="col-sm-8 text-break" th:text="${user.email}">user@example.com</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4 text-muted small fw-semibold">Vai trò:</div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-primary" th:text="${user.role}">CANDIDATE</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Họ và tên (sửa được) -->
+                <div class="mb-3">
+                    <label for="fullName" class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-person-badge"></i></span>
+                        <input type="text"
+                               id="fullName"
+                               th:field="*{fullName}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
+                               placeholder="Nhập họ và tên..."
+                               required>
+                    </div>
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}">
+                        Lỗi họ tên
+                    </div>
+                </div>
+
+                <!-- Số điện thoại (sửa được) -->
+                <div class="mb-4">
+                    <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-telephone"></i></span>
+                        <input type="text"
+                               id="phone"
+                               th:field="*{phone}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''"
+                               placeholder="9–15 chữ số...">
+                    </div>
+                    <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}">
+                        Lỗi số điện thoại
+                    </div>
+                </div>
+
+                <!-- Nút Lưu thông tin -->
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm mb-3">
+                    <i class="bi bi-save me-1"></i> Lưu thông tin
+                </button>
+            </form>
+
+            <!-- Nút Đổi mật khẩu & Đăng xuất -->
+            <div class="d-flex gap-2 pt-2 border-top">
+                <a th:href="@{/profile/password}" class="btn btn-outline-primary w-50 py-2">
+                    <i class="bi bi-key-fill me-1"></i> Đổi mật khẩu
+                </a>
+                <form th:action="@{/logout}" method="post" class="w-50 m-0">
+                    <button type="submit" class="btn btn-outline-danger w-100 py-2">
+                        <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quay về demo -->
+            <div class="text-center mt-4 pt-2">
+                <a th:href="@{/demo}" class="text-muted text-decoration-none small">
+                    <i class="bi bi-arrow-left"></i> Về trang kiểm tra hệ thống
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

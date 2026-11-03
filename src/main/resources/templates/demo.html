@@ -103,7 +103,34 @@
         <a th:href="@{/demo/db-check}" th:class="${activeTab == 'db'} ? 'active' : ''">
             2. URL Kết Nối Database (/demo/db-check)
         </a>
+        <a th:href="@{/login}">
+            3. Đăng nhập hệ thống (/login - UC-01)
+        </a>
+        <a th:href="@{/register}">
+            4. Đăng ký tài khoản (/register - UC-02)
+        </a>
     </nav>
+
+    <!-- Trạng thái phiên người dùng hiện tại (UC-01, UC-03) -->
+    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <strong>Phiên người dùng:</strong>
+            <span th:if="${currentUser != null}">
+                <span style="color: #0d6efd; font-weight: bold;" th:text="${currentUser.fullName}">Người dùng</span>
+                (<span th:text="${currentUser.username}">username</span> - <span style="background: #e7f1ff; color: #0d6efd; padding: 2px 6px; border-radius: 3px;" th:text="${currentUser.role}">VAI TRÒ</span>)
+            </span>
+            <span th:if="${currentUser == null}" style="color: #6c757d; font-style: italic;">
+                Chưa đăng nhập (Khách / Guest)
+            </span>
+        </div>
+        <div th:if="${currentUser != null}">
+            <form th:action="@{/logout}" method="post" style="display: inline; margin: 0;">
+                <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 5px 12px; border-radius: 3px; cursor: pointer;">
+                    Đăng xuất (UC-03)
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- ================= 1. GIAO DIỆN HELLO ================= -->
     <div th:if="${activeTab == 'hello'}" class="box">
