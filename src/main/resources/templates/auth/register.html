@@ -21,15 +21,25 @@
             <!-- Flash & Error alerts -->
             <div th:replace="~{fragments/flash :: flash-messages}"></div>
 
-            <!-- Global form errors (e.g. AssertTrue or general business errors) -->
-            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger py-2">
-                <ul class="mb-0 ps-3">
-                    <li th:each="err : ${#fields.globalErrors()}" th:text="${err}">Lỗi</li>
-                </ul>
-            </div>
-
             <!-- Register Form -->
-            <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+            <form th:action="@{/register}"
+                  th:object="${form}"
+                  method="post"
+                  novalidate>
+
+                <!-- Global form errors -->
+                <div th:if="${#fields.hasGlobalErrors()}"
+                     class="alert alert-danger py-2">
+                    <ul class="mb-0 ps-3">
+                        <li th:each="err : ${#fields.globalErrors()}"
+                            th:text="${err}">
+                            Lỗi
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Giữ nguyên các trường fullName, username,
+                     email, password, confirmPassword bên dưới -->
                 <!-- Họ và tên -->
                 <div class="mb-3">
                     <label for="fullName" class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
