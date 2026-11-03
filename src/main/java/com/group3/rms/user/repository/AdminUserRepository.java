@@ -19,6 +19,10 @@ public interface AdminUserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "roles")
     Optional<User> findById(Long id);
 
+    boolean existsByUsernameIgnoreCase(String username);
+
+    boolean existsByEmailIgnoreCase(String email);
+
     @Query(value = """
             select u.id from User u
             where (:keyword is null

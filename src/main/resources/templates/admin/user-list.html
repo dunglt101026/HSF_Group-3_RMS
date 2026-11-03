@@ -14,11 +14,9 @@
     <main class="container-fluid px-3 px-lg-5 py-4">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <h1 class="h3 fw-bold mb-0">Quản lý tài khoản</h1>
-            <!-- UC-07: bật liên kết /admin/users/new khi route được triển khai. -->
-            <button type="button" class="btn btn-primary" disabled
-                    title="Chức năng tạo tài khoản chưa khả dụng.">
+            <a th:href="@{/admin/users/new}" class="btn btn-primary">
                 <i class="bi bi-person-plus me-1" aria-hidden="true"></i> Tạo tài khoản
-            </button>
+            </a>
         </div>
 
         <div th:replace="~{fragments/flash :: flash-messages}"></div>
