@@ -85,12 +85,14 @@
                     </thead>
                     <tbody>
                         <tr th:each="user : ${users.content}">
-                            <!-- UC-08/09: thêm liên kết /admin/users/{id} khi route có sẵn. -->
                             <td class="ps-3 text-break">
-                                <span class="fw-semibold" th:text="${user.fullName}"
-                                      title="Chức năng xem chi tiết tài khoản chưa khả dụng.">Họ tên</span>
+                                <a th:href="@{/admin/users/{id}(id=${user.id})}"
+                                   class="fw-semibold" th:text="${user.fullName}">Họ tên</a>
                             </td>
-                            <td class="text-break" th:text="${user.username}">username</td>
+                            <td class="text-break">
+                                <a th:href="@{/admin/users/{id}(id=${user.id})}"
+                                   th:text="${user.username}">username</a>
+                            </td>
                             <td class="text-break" th:text="${user.email}">email@example.com</td>
                             <td th:switch="${user.role.name()}">
                                 <span th:case="'ADMIN'">Quản trị viên</span>

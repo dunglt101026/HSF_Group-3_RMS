@@ -3,10 +3,12 @@ package com.group3.rms.user.repository;
 import com.group3.rms.user.entity.RoleCode;
 import com.group3.rms.user.entity.User;
 import com.group3.rms.user.entity.UserStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,6 +20,14 @@ public interface AdminUserRepository extends JpaRepository<User, Long> {
     @Override
     @EntityGraph(attributePaths = "roles")
     Optional<User> findById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = "roles")
+    @Query("select u from User u where u.id = :id")
+    Optional<User> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("select count(j.id) from Job j where j.owner.id = :ownerId and j.deleted = false")
+    long countJobsByOwnerId(@Param("ownerId") Long ownerId);
 
     boolean existsByUsernameIgnoreCase(String username);
 

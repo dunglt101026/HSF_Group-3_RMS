@@ -5,9 +5,11 @@ import com.group3.rms.audit.entity.TargetType;
 import com.group3.rms.audit.service.AuditLogService;
 import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.exception.ForbiddenException;
+import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.AdminUserCreateRequest;
+import com.group3.rms.user.dto.AdminUserDetailResponse;
 import com.group3.rms.user.dto.AdminUserSummaryResponse;
 import com.group3.rms.user.entity.Role;
 import com.group3.rms.user.entity.RoleCode;
@@ -141,6 +143,95 @@ public class AdminUserServiceImpl implements AdminUserService {
         );
 
         return savedUser.getId();
+    }
+
+    @Override
+    public AdminUserDetailResponse getUserDetail(Long id) {
+        requireActiveAdmin();
+        validateUserId(id);
+
+        User user = adminUserRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
+        RoleCode role = getSingleRole(user);
+        if (user.getStatus() == null) {
+            throw new BusinessException("Dữ liệu trạng thái tài khoản không hợp lệ. Vui lòng kiểm tra lại dữ liệu.");
+        }
+
+        Long jobCount = null;
+        if (role == RoleCode.HR) {
+            jobCount = adminUserRepository.countJobsByOwnerId(id);
+        }
+
+        return adminUserMapper.toDetailResponse(user, role, jobCount);
+    }
+
+    @Override
+    @Transactional
+    public void lockUser(Long id, boolean confirmed) {
+        requireActiveAdmin();
+        User user = findUserForStatusChange(id);
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BusinessException("Tài khoản đã ở trạng thái yêu cầu.");
+        }
+        if (!confirmed) {
+            throw new BusinessException("Vui lòng xác nhận khóa tài khoản.");
+        }
+
+        user.setStatus(UserStatus.INACTIVE);
+        adminUserRepository.saveAndFlush(user);
+        auditLogService.log(
+                AuditAction.LOCK_ACCOUNT,
+                TargetType.USER,
+                user.getId(),
+                "Khóa tài khoản: " + user.getUsername()
+        );
+    }
+
+    @Override
+    @Transactional
+    public void unlockUser(Long id, boolean confirmed) {
+        requireActiveAdmin();
+        User user = findUserForStatusChange(id);
+
+        if (user.getStatus() != UserStatus.INACTIVE) {
+            throw new BusinessException("Tài khoản đã ở trạng thái yêu cầu.");
+        }
+        if (!confirmed) {
+            throw new BusinessException("Vui lòng xác nhận mở khóa tài khoản.");
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        adminUserRepository.saveAndFlush(user);
+        auditLogService.log(
+                AuditAction.UNLOCK_ACCOUNT,
+                TargetType.USER,
+                user.getId(),
+                "Mở khóa tài khoản: " + user.getUsername()
+        );
+    }
+
+    private void validateUserId(Long id) {
+        if (id == null || id <= 0) {
+            throw new BusinessException("ID tài khoản phải là số nguyên lớn hơn 0.");
+        }
+    }
+
+    private User findUserForStatusChange(Long id) {
+        validateUserId(id);
+
+        // Giữ khóa bản ghi đến hết giao dịch, tránh hai yêu cầu cùng ghi trạng thái và nhật ký.
+        User user = adminUserRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
+        RoleCode role = getSingleRole(user);
+        if (role == RoleCode.ADMIN) {
+            throw new BusinessException("Không được thay đổi trạng thái tài khoản ADMIN.");
+        }
+        if (user.getStatus() == null) {
+            throw new BusinessException("Dữ liệu trạng thái tài khoản không hợp lệ. Vui lòng kiểm tra lại dữ liệu.");
+        }
+
+        return user;
     }
 
     private void requireActiveAdmin() {

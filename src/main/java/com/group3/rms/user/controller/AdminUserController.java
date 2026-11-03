@@ -17,6 +17,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -89,8 +90,9 @@ public class AdminUserController {
         adminUserService.checkCreatePermission();
         if (!bindingResult.hasErrors()) {
             try {
+                Long id;
                 try {
-                    adminUserService.createUser(form);
+                    id = adminUserService.createUser(form);
                 } catch (DataIntegrityViolationException e) {
                     // Giao dịch tạo đã rollback; truy vấn lại trong giao dịch đọc mới.
                     adminUserService.checkAccountAvailability(form.username(), form.email());
@@ -98,13 +100,53 @@ public class AdminUserController {
                 }
 
                 ra.addFlashAttribute("success", "Đã tạo tài khoản.");
-                return "redirect:/admin/users";
+                return "redirect:/admin/users/" + id;
             } catch (BusinessException e) {
                 e.applyTo(bindingResult);
             }
         }
 
         return "admin/user-form";
+    }
+
+    @GetMapping("/{id}")
+    public String userDetail(@PathVariable Long id, Model model) {
+        if (currentUserService.get().isEmpty()) {
+            return "redirect:/login";
+        }
+
+        model.addAttribute("user", adminUserService.getUserDetail(id));
+        return "admin/user-detail";
+    }
+
+    @PostMapping("/{id}/lock")
+    public String lockUser(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean confirmed,
+            RedirectAttributes ra
+    ) {
+        if (currentUserService.get().isEmpty()) {
+            return "redirect:/login";
+        }
+
+        adminUserService.lockUser(id, confirmed);
+        ra.addFlashAttribute("success", "Đã khóa tài khoản.");
+        return "redirect:/admin/users/" + id;
+    }
+
+    @PostMapping("/{id}/unlock")
+    public String unlockUser(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean confirmed,
+            RedirectAttributes ra
+    ) {
+        if (currentUserService.get().isEmpty()) {
+            return "redirect:/login";
+        }
+
+        adminUserService.unlockUser(id, confirmed);
+        ra.addFlashAttribute("success", "Đã mở khóa tài khoản.");
+        return "redirect:/admin/users/" + id;
     }
 
     private BindingResult clearPassword(AdminUserCreateRequest form, BindingResult bindingResult, Model model) {
