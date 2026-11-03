@@ -97,6 +97,19 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public String logout(RedirectAttributes ra) {
+        log.info("Xử lý đăng xuất tài khoản");
+        currentUserService.clear();
+        ra.addFlashAttribute("success", "Bạn đã đăng xuất thành công.");
+        return "redirect:/login";
+    }
+
+    @GetMapping("/logout")
+    public String logoutGet(RedirectAttributes ra) {
+        return logout(ra);
+    }
+
     private String redirectUrlForRole(RoleCode role) {
         if (role == null) {
             return "/";

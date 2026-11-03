@@ -267,4 +267,34 @@ class AuthControllerTest {
         assertThat(bindingResult.hasFieldErrors("username")).isTrue();
         assertThat(bindingResult.getFieldError("username").getDefaultMessage()).isEqualTo("Tên đăng nhập đã được sử dụng.");
     }
+
+    /* =========================================================================
+     * UC-03: LOGOUT TESTS
+     * ========================================================================= */
+
+    @Test
+    @DisplayName("POST /logout: Đăng xuất thành công -> Xóa CurrentUser và chuyển hướng về /login kèm flash success")
+    void postLogout_ShouldClearCurrentUserServiceAndRedirectToLogin() {
+        fakeCurrentUserService.current = new CurrentUser(2L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        RedirectAttributesModelMap ra = new RedirectAttributesModelMap();
+
+        String view = authController.logout(ra);
+
+        assertThat(fakeCurrentUserService.current).isNull();
+        assertThat(view).isEqualTo("redirect:/login");
+        assertThat(ra.getFlashAttributes().get("success")).isEqualTo("Bạn đã đăng xuất thành công.");
+    }
+
+    @Test
+    @DisplayName("GET /logout: Đăng xuất bằng GET -> Vẫn xóa CurrentUser và chuyển hướng về /login")
+    void getLogout_ShouldAlsoClearCurrentUserServiceAndRedirectToLogin() {
+        fakeCurrentUserService.current = new CurrentUser(1L, "admin", "Admin", RoleCode.ADMIN);
+        RedirectAttributesModelMap ra = new RedirectAttributesModelMap();
+
+        String view = authController.logoutGet(ra);
+
+        assertThat(fakeCurrentUserService.current).isNull();
+        assertThat(view).isEqualTo("redirect:/login");
+        assertThat(ra.getFlashAttributes().get("success")).isEqualTo("Bạn đã đăng xuất thành công.");
+    }
 }
