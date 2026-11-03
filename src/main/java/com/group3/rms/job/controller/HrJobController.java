@@ -194,4 +194,18 @@ public class HrJobController {
         return "redirect:/hr/jobs/" + id;
     }
 
+    @PostMapping("/{id}/delete")
+    public String deleteJob(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        jobService.deleteJob(id);
+
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "Xóa tin tuyển dụng thành công."
+        );
+
+        return "redirect:/hr/jobs";
+    }
 }

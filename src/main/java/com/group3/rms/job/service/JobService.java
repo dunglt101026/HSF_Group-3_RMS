@@ -28,4 +28,5 @@ public interface JobService {
 
     JobResponse closeJob(Long jobId);
 
+    void deleteJob(Long jobId);
 }

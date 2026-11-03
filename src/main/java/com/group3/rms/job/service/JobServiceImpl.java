@@ -437,4 +437,46 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(savedJob);
     }
 
+    @Override
+    @Transactional
+    public void deleteJob(Long jobId) {
+        CurrentUser currentUser = currentUserService.require();
+
+        if (currentUser.role() != RoleCode.HR) {
+            throw new ForbiddenException("Chi HR moi duoc phep xoa tin.");
+        }
+
+        Job job = jobRepository.findByIdAndDeletedFalse(jobId)
+                .orElseThrow(() ->
+                        new NotFoundException("Khong tim thay tin tuyen dung."));
+
+        if (!job.getOwner().getId().equals(currentUser.id())) {
+            throw new ForbiddenException("Ban khong co quyen xoa tin nay.");
+        }
+
+        if (job.getStatus() != JobStatus.DRAFT) {
+            throw new BusinessException(
+                    "Chi co the xoa tin tuyen dung o trang thai DRAFT."
+            );
+        }
+
+        if (applicationRepository.countByJobId(jobId) > 0) {
+            throw new BusinessException(
+                    "Khong the xoa tin tuyen dung da co ung vien ung tuyen."
+            );
+        }
+
+        job.setDeleted(true);
+        job.setDeletedAt(LocalDateTime.now());
+
+        jobRepository.save(job);
+
+        auditLogService.log(
+                AuditAction.DELETE_JOB,
+                TargetType.JOB,
+                job.getId(),
+                "HR soft deleted job: " + job.getTitle()
+        );
+    }
+
 }
