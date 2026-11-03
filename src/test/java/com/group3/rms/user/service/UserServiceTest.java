@@ -8,6 +8,7 @@ import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.LoginRequest;
 import com.group3.rms.user.dto.PasswordChangeRequest;
+import com.group3.rms.user.dto.ProfileUpdateRequest;
 import com.group3.rms.user.dto.RegisterRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.Role;
@@ -407,5 +408,42 @@ class UserServiceTest {
                 .hasMessage("Mật khẩu xác nhận không khớp.")
                 .extracting(e -> ((BusinessException) e).getField())
                 .isEqualTo("confirmPassword");
+    }
+
+    /* =========================================================================
+     * UC-05: VIEW & UPDATE PROFILE TESTS
+     * ========================================================================= */
+
+    @Test
+    @DisplayName("UC-05: Xem thông tin cá nhân của người dùng hiện tại")
+    void getCurrentUserProfile_Success_ShouldReturnUserResponse() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+
+        UserResponse profile = userService.getCurrentUserProfile();
+
+        assertThat(profile).isNotNull();
+        assertThat(profile.id()).isEqualTo(10L);
+        assertThat(profile.username()).isEqualTo("hr1");
+        assertThat(profile.fullName()).isEqualTo("Trần Thu Hà");
+        assertThat(profile.role()).isEqualTo(RoleCode.HR);
+    }
+
+    @Test
+    @DisplayName("UC-05: Cập nhật thông tin cá nhân thành công")
+    void updateProfile_Success_ShouldUpdateFullNameAndPhoneAndCurrentUser() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        ProfileUpdateRequest request = new ProfileUpdateRequest("Trần Thu Hà Mới", "0901234567");
+
+        UserResponse response = userService.updateProfile(request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.fullName()).isEqualTo("Trần Thu Hà Mới");
+        assertThat(response.phone()).isEqualTo("0901234567");
+
+        assertThat(existingUser.getFullName()).isEqualTo("Trần Thu Hà Mới");
+        assertThat(existingUser.getPhone()).isEqualTo("0901234567");
+
+        // Đảm bảo phiên người dùng hiện tại được cập nhật họ tên mới
+        assertThat(fakeCurrentUserService.current.fullName()).isEqualTo("Trần Thu Hà Mới");
     }
 }

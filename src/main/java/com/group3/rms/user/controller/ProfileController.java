@@ -4,6 +4,7 @@ import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.PasswordChangeRequest;
+import com.group3.rms.user.dto.ProfileUpdateRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.service.UserService;
 import jakarta.validation.Valid;
@@ -38,7 +39,39 @@ public class ProfileController {
 
         UserResponse user = userService.getCurrentUserProfile();
         model.addAttribute("user", user);
+
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", new ProfileUpdateRequest(user.fullName(), user.phone()));
+        }
         return "profile/view";
+    }
+
+    @PostMapping
+    public String updateProfile(
+            @Valid @ModelAttribute("form") ProfileUpdateRequest form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes ra
+    ) {
+        Optional<CurrentUser> currentOpt = currentUserService.get();
+        if (currentOpt.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("user", userService.getCurrentUserProfile());
+            return "profile/view";
+        }
+
+        try {
+            userService.updateProfile(form);
+            ra.addFlashAttribute("success", "Cập nhật thông tin thành công.");
+            return "redirect:/profile";
+        } catch (BusinessException e) {
+            e.applyTo(bindingResult);
+            model.addAttribute("user", userService.getCurrentUserProfile());
+            return "profile/view";
+        }
     }
 
     @GetMapping("/password")

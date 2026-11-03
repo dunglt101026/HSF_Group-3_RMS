@@ -5,6 +5,7 @@ import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.LoginRequest;
 import com.group3.rms.user.dto.PasswordChangeRequest;
+import com.group3.rms.user.dto.ProfileUpdateRequest;
 import com.group3.rms.user.dto.RegisterRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.RoleCode;
@@ -57,6 +58,7 @@ class ProfileControllerTest {
         UserResponse profileToReturn;
         BusinessException exceptionToThrow;
         PasswordChangeRequest lastChangePasswordRequest;
+        ProfileUpdateRequest lastProfileUpdateRequest;
 
         @Override
         public UserResponse login(LoginRequest request) {
@@ -80,6 +82,15 @@ class ProfileControllerTest {
         public UserResponse getCurrentUserProfile() {
             return profileToReturn;
         }
+
+        @Override
+        public UserResponse updateProfile(ProfileUpdateRequest request) {
+            if (exceptionToThrow != null) {
+                throw exceptionToThrow;
+            }
+            this.lastProfileUpdateRequest = request;
+            return profileToReturn;
+        }
     }
 
     @BeforeEach
@@ -88,6 +99,10 @@ class ProfileControllerTest {
         fakeUserService = new FakeUserService();
         profileController = new ProfileController(fakeUserService, fakeCurrentUserService);
     }
+
+    /* =========================================================================
+     * UC-05: VIEW & UPDATE PROFILE TESTS
+     * ========================================================================= */
 
     @Test
     @DisplayName("GET /profile: Chưa đăng nhập -> Chuyển hướng về /login")
@@ -100,7 +115,7 @@ class ProfileControllerTest {
     }
 
     @Test
-    @DisplayName("GET /profile: Đã đăng nhập -> Trả về view profile/view kèm thông tin user")
+    @DisplayName("GET /profile: Đã đăng nhập -> Trả về view profile/view kèm thông tin user và form")
     void viewProfile_WhenLoggedIn_ShouldReturnProfileView() {
         fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
         fakeUserService.profileToReturn = new UserResponse(
@@ -112,7 +127,67 @@ class ProfileControllerTest {
 
         assertThat(view).isEqualTo("profile/view");
         assertThat(model.getAttribute("user")).isNotNull();
+        assertThat(model.getAttribute("form")).isNotNull();
     }
+
+    @Test
+    @DisplayName("POST /profile: Chưa đăng nhập -> Chuyển hướng về /login")
+    void postProfile_WhenNotLoggedIn_ShouldRedirectToLogin() {
+        ProfileUpdateRequest form = new ProfileUpdateRequest("Trần Thu Hà", "0901000001");
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "form");
+        Model model = new ConcurrentModel();
+        RedirectAttributesModelMap ra = new RedirectAttributesModelMap();
+
+        String view = profileController.updateProfile(form, bindingResult, model, ra);
+
+        assertThat(view).isEqualTo("redirect:/login");
+    }
+
+    @Test
+    @DisplayName("POST /profile: Form có lỗi validation -> Trả về profile/view")
+    void postProfile_ValidationErrors_ShouldReturnProfileView() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        fakeUserService.profileToReturn = new UserResponse(
+                10L, "hr1", "hr1@rms.local", "Trần Thu Hà", "0901000001", RoleCode.HR, UserStatus.ACTIVE
+        );
+
+        ProfileUpdateRequest form = new ProfileUpdateRequest("", "invalid-phone");
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "form");
+        bindingResult.rejectValue("fullName", "NotBlank", "Họ và tên không được để trống");
+
+        Model model = new ConcurrentModel();
+        RedirectAttributesModelMap ra = new RedirectAttributesModelMap();
+
+        String view = profileController.updateProfile(form, bindingResult, model, ra);
+
+        assertThat(view).isEqualTo("profile/view");
+        assertThat(model.getAttribute("user")).isNotNull();
+    }
+
+    @Test
+    @DisplayName("POST /profile: Cập nhật thành công -> Chuyển hướng về /profile kèm flash success")
+    void postProfile_Success_ShouldRedirectToProfile() {
+        fakeCurrentUserService.current = new CurrentUser(10L, "hr1", "Trần Thu Hà", RoleCode.HR);
+        fakeUserService.profileToReturn = new UserResponse(
+                10L, "hr1", "hr1@rms.local", "Trần Thu Hà Mới", "0909999999", RoleCode.HR, UserStatus.ACTIVE
+        );
+
+        ProfileUpdateRequest form = new ProfileUpdateRequest("Trần Thu Hà Mới", "0909999999");
+        BindingResult bindingResult = new BeanPropertyBindingResult(form, "form");
+
+        Model model = new ConcurrentModel();
+        RedirectAttributesModelMap ra = new RedirectAttributesModelMap();
+
+        String view = profileController.updateProfile(form, bindingResult, model, ra);
+
+        assertThat(view).isEqualTo("redirect:/profile");
+        assertThat(ra.getFlashAttributes().get("success")).isEqualTo("Cập nhật thông tin thành công.");
+        assertThat(fakeUserService.lastProfileUpdateRequest).isNotNull();
+    }
+
+    /* =========================================================================
+     * UC-04: CHANGE PASSWORD TESTS
+     * ========================================================================= */
 
     @Test
     @DisplayName("GET /profile/password: Chưa đăng nhập -> Chuyển hướng về /login")

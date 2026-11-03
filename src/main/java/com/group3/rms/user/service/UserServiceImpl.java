@@ -9,6 +9,7 @@ import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.LoginRequest;
 import com.group3.rms.user.dto.PasswordChangeRequest;
+import com.group3.rms.user.dto.ProfileUpdateRequest;
 import com.group3.rms.user.dto.RegisterRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.Role;
@@ -161,5 +162,31 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(current.id())
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy thông tin tài khoản."));
         return userMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateProfile(ProfileUpdateRequest request) {
+        CurrentUser current = currentUserService.require();
+        log.info("Xử lý cập nhật thông tin cá nhân cho user: '{}'", current.username());
+
+        User user = userRepository.findById(current.id())
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy thông tin tài khoản."));
+
+        user.setFullName(request.fullName().trim());
+        user.setPhone(request.phone() != null && !request.phone().isBlank() ? request.phone().trim() : null);
+
+        User savedUser = userRepository.save(user);
+
+        // Cập nhật lại phiên người dùng hiện tại
+        currentUserService.set(new CurrentUser(
+                savedUser.getId(),
+                savedUser.getUsername(),
+                savedUser.getFullName(),
+                current.role()
+        ));
+
+        log.info("Người dùng '{}' đã cập nhật thông tin cá nhân thành công", savedUser.getUsername());
+        return userMapper.toResponse(savedUser);
     }
 }

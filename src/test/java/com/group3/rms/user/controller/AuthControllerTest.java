@@ -80,6 +80,11 @@ class AuthControllerTest {
         public UserResponse getCurrentUserProfile() {
             return responseToReturn;
         }
+
+        @Override
+        public UserResponse updateProfile(com.group3.rms.user.dto.ProfileUpdateRequest request) {
+            return responseToReturn;
+        }
     }
 
     @BeforeEach
