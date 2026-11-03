@@ -8,4 +8,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long>,
 
     /** Đã nộp cho tin này chưa (kể cả đã rút) — UC-18. */
     boolean existsByJobIdAndCandidateId(Long jobId, Long candidateId);
+
+
+    long countByJobId(Long jobId);
+
 }

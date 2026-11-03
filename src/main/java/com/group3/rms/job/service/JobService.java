@@ -1,0 +1,20 @@
+
+package com.group3.rms.job.service;
+
+import com.group3.rms.job.dto.JobResponse;
+import com.group3.rms.job.dto.JobSummaryResponse;
+import com.group3.rms.job.entity.JobStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+public interface JobService {
+
+    Page<JobSummaryResponse> searchJobs(
+            String keyword,
+            JobStatus status,
+            Long ownerId,
+            Pageable pageable
+    );
+
+    JobResponse getJobDetail(Long jobId);
+}
