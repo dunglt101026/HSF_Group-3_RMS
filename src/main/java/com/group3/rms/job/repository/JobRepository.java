@@ -2,6 +2,7 @@
 package com.group3.rms.job.repository;
 
 import com.group3.rms.job.entity.Job;
+import com.group3.rms.job.entity.JobStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -9,6 +10,8 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public interface JobRepository extends JpaRepository<Job, Long>,
@@ -30,4 +33,9 @@ public interface JobRepository extends JpaRepository<Job, Long>,
             "skills"
     })
     Optional<Job> findByIdAndDeletedFalse(Long id);
+
+    List<Job> findAllByStatusAndDeadlineLessThanAndDeletedFalse(
+            JobStatus status,
+            LocalDate deadline
+    );
 }
