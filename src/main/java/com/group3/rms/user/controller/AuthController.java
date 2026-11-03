@@ -4,6 +4,7 @@ import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.LoginRequest;
+import com.group3.rms.user.dto.RegisterRequest;
 import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.RoleCode;
 import com.group3.rms.user.service.UserService;
@@ -59,6 +60,40 @@ public class AuthController {
         } catch (BusinessException e) {
             model.addAttribute("errorMessage", e.getMessage());
             return "auth/login";
+        }
+    }
+
+    @GetMapping("/register")
+    public String registerPage(Model model) {
+        Optional<CurrentUser> currentOpt = currentUserService.get();
+        if (currentOpt.isPresent()) {
+            return "redirect:" + redirectUrlForRole(currentOpt.get().role());
+        }
+
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", new RegisterRequest("", "", "", "", ""));
+        }
+        return "auth/register";
+    }
+
+    @PostMapping("/register")
+    public String register(
+            @Valid @ModelAttribute("form") RegisterRequest form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes ra
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "auth/register";
+        }
+
+        try {
+            userService.register(form);
+            ra.addFlashAttribute("success", "Tạo tài khoản thành công, vui lòng đăng nhập.");
+            return "redirect:/login";
+        } catch (BusinessException e) {
+            e.applyTo(bindingResult);
+            return "auth/register";
         }
     }
 
