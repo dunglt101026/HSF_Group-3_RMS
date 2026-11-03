@@ -15,6 +15,10 @@ public class BusinessException extends RuntimeException {
         this.field = field;
     }
 
+    public String getField() {
+        return field;
+    }
+
     public void applyTo(BindingResult result) {
         if (field != null) {
             result.rejectValue(field, "business", getMessage());
