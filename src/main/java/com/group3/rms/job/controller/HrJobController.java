@@ -3,6 +3,7 @@ package com.group3.rms.job.controller;
 
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.job.dto.JobCreateRequest;
 import com.group3.rms.job.dto.JobResponse;
 import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.job.repository.DepartmentRepository;
@@ -61,6 +62,20 @@ public class HrJobController {
         return "job/list";
     }
 
+    @GetMapping("/new")
+    public String showCreateForm(Model model) {
+        model.addAttribute("form", new JobCreateRequest(
+                null, null, null, null, null, null, null, null
+        ));
+
+        addFormOptions(model);
+
+        model.addAttribute("pageTitle", "Tạo tin tuyển dụng");
+        model.addAttribute("formAction", "/hr/jobs");
+
+        return "job/form";
+    }
+
     @GetMapping("/{id}")
     public String jobDetail(
             @PathVariable Long id,
@@ -68,6 +83,37 @@ public class HrJobController {
     ) {
         model.addAttribute("job", jobService.getJobDetail(id));
         return "job/detail";
+    }
+
+    private void addFormOptions(Model model) {
+        model.addAttribute(
+                "departments",
+                departmentRepository.findAll(
+                        Sort.by(Sort.Direction.ASC, "name")
+                )
+        );
+
+        model.addAttribute(
+                "skills",
+                skillRepository.findAll(
+                        Sort.by(Sort.Direction.ASC, "name")
+                )
+        );
+    }
+
+    @PostMapping
+    public String createJob(
+            @ModelAttribute JobCreateRequest request,
+            RedirectAttributes redirectAttributes
+    ) {
+        JobResponse createdJob = jobService.createJob(request);
+
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "Tạo tin tuyển dụng thành công."
+        );
+
+        return "redirect:/hr/jobs/" + createdJob.id();
     }
 
 }

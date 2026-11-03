@@ -1,0 +1,211 @@
+
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/staff}">
+
+<head>
+    <title th:text="${pageTitle}">Tin tuyển dụng</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="mb-4">
+        <a th:href="${job != null ? '/hr/jobs/' + job.id : '/hr/jobs'}"
+           class="text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+
+        <h2 class="page-heading mt-3 mb-1" th:text="${pageTitle}"></h2>
+        <p class="text-muted mb-0">
+            Điền đầy đủ thông tin tin tuyển dụng bên dưới.
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-4">
+
+            <form th:object="${form}"
+                  th:action="${formAction}"
+                  method="post">
+
+                <!-- Thông tin cơ bản -->
+                <h5 class="fw-bold mb-3">Thông tin cơ bản</h5>
+
+                <div class="row g-3">
+
+                    <div class="col-12">
+                        <label class="form-label required" for="title">
+                            Tiêu đề tuyển dụng
+                        </label>
+                        <input id="title"
+                               type="text"
+                               th:field="*{title}"
+                               class="form-control"
+                               maxlength="200"
+                               placeholder="Ví dụ: Java Backend Developer"
+                               required>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label required" for="departmentId">
+                            Phòng ban
+                        </label>
+                        <select id="departmentId"
+                                th:field="*{departmentId}"
+                                class="form-select"
+                                required>
+                            <option value="">-- Chọn phòng ban --</option>
+                            <option th:each="department : ${departments}"
+                                    th:value="${department.id}"
+                                    th:text="${department.name}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="location">
+                            Địa điểm làm việc
+                        </label>
+                        <input id="location"
+                               type="text"
+                               th:field="*{location}"
+                               class="form-control"
+                               maxlength="200"
+                               placeholder="Ví dụ: Hà Nội">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="salaryMin">
+                            Lương tối thiểu (VNĐ)
+                        </label>
+                        <input id="salaryMin"
+                               type="number"
+                               th:field="*{salaryMin}"
+                               class="form-control"
+                               min="0"
+                               step="100000"
+                               placeholder="Ví dụ: 10000000">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label" for="salaryMax">
+                            Lương tối đa (VNĐ)
+                        </label>
+                        <input id="salaryMax"
+                               type="number"
+                               th:field="*{salaryMax}"
+                               class="form-control"
+                               min="0"
+                               step="100000"
+                               placeholder="Ví dụ: 20000000">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label required" for="deadline">
+                            Hạn nộp hồ sơ
+                        </label>
+                        <input id="deadline"
+                               type="date"
+                               th:field="*{deadline}"
+                               class="form-control"
+                               required>
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Mô tả -->
+                <h5 class="fw-bold mb-3">Mô tả công việc</h5>
+
+                <div class="mb-4">
+                    <label class="form-label required" for="description">
+                        Nội dung mô tả
+                    </label>
+                    <textarea id="description"
+                              th:field="*{description}"
+                              class="form-control"
+                              rows="8"
+                              placeholder="Mô tả công việc, trách nhiệm và yêu cầu ứng viên..."
+                              required></textarea>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Kỹ năng -->
+                <h5 class="fw-bold mb-3">Kỹ năng yêu cầu</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-4 col-sm-6"
+                         th:each="skill : ${skills}">
+                        <div class="form-check border rounded p-3 ps-5">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   th:field="*{skillIds}"
+                                   th:value="${skill.id}"
+                                   th:id="${'skill-' + skill.id}">
+
+                            <label class="form-check-label"
+                                   th:for="${'skill-' + skill.id}"
+                                   th:text="${skill.name}">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Nút -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="${job != null ? '/hr/jobs/' + job.id : '/hr/jobs'}"
+                       class="btn btn-outline-secondary">
+                        Hủy
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${job != null ? 'Lưu thay đổi' : 'Tạo tin tuyển dụng'}"></span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+
+<th:block layout:fragment="scripts">
+    <script>
+        const minSalary = document.getElementById("salaryMin");
+        const maxSalary = document.getElementById("salaryMax");
+
+        function validateSalary() {
+            if (minSalary.value && maxSalary.value) {
+                maxSalary.setCustomValidity(
+                    Number(maxSalary.value) < Number(minSalary.value)
+                        ? "Lương tối đa không được nhỏ hơn lương tối thiểu."
+                        : ""
+                );
+            } else {
+                maxSalary.setCustomValidity("");
+            }
+        }
+
+        minSalary.addEventListener("input", validateSalary);
+        maxSalary.addEventListener("input", validateSalary);
+
+        const deadline = document.getElementById("deadline");
+        const today = new Date();
+        const localToday = new Date(
+            today.getTime() - today.getTimezoneOffset() * 60000
+        ).toISOString().split("T")[0];
+
+        deadline.min = localToday;
+    </script>
+</th:block>
+
+</body>
+</html>

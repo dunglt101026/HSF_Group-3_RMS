@@ -10,6 +10,7 @@ import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.job.dto.JobCreateRequest;
 import com.group3.rms.job.dto.JobResponse;
 import com.group3.rms.job.dto.JobSummaryResponse;
 import com.group3.rms.job.entity.Department;
@@ -89,6 +90,159 @@ public class JobServiceImpl implements JobService {
                 );
 
         return jobMapper.toResponse(job);
+    }
+
+    // UC-12: Tao tin tuyen dung.
+    @Override
+    @Transactional
+    public JobResponse createJob(JobCreateRequest request) {
+        CurrentUser currentUser = currentUserService.require();
+
+        // Chi HR moi duoc tao tin.
+        if (currentUser.role() != RoleCode.HR) {
+            throw new ForbiddenException(
+                    "Chi HR moi duoc phep tao tin tuyen dung."
+            );
+        }
+
+        validateJobRequest(request);
+
+        User owner = userRepository.findById(currentUser.id())
+                .orElseThrow(() ->
+                        new NotFoundException("Khong tim thay tai khoan HR.")
+                );
+
+        Department department = departmentRepository
+                .findById(request.departmentId())
+                .orElseThrow(() ->
+                        new BusinessException(
+                                "departmentId",
+                                "Phong ban khong ton tai."
+                        )
+                );
+
+        Job job = new Job();
+        job.setTitle(request.title().trim());
+        job.setDescription(request.description().trim());
+        job.setLocation(
+                request.location() == null || request.location().isBlank()
+                        ? null
+                        : request.location().trim()
+        );
+        job.setSalaryMin(request.salaryMin());
+        job.setSalaryMax(request.salaryMax());
+        job.setDeadline(request.deadline());
+        job.setDepartment(department);
+        job.setOwner(owner);
+
+        // Tin moi tao luon o trang thai DRAFT.
+        job.setStatus(JobStatus.DRAFT);
+
+        // Gan danh sach ky nang.
+        if (request.skillIds() != null && !request.skillIds().isEmpty()) {
+            if (request.skillIds().contains(null)) {
+                throw new BusinessException(
+                        "skillIds",
+                        "Danh sach ky nang khong hop le."
+                );
+            }
+
+            var skills = skillRepository.findAllById(request.skillIds());
+
+            if (skills.size() != request.skillIds().size()) {
+                throw new BusinessException(
+                        "skillIds",
+                        "Mot hoac nhieu ky nang khong ton tai."
+                );
+            }
+
+            job.getSkills().addAll(skills);
+        }
+
+        Job savedJob = jobRepository.save(job);
+
+        auditLogService.log(
+                AuditAction.CREATE_JOB,
+                TargetType.JOB,
+                savedJob.getId(),
+                "HR created job: " + savedJob.getTitle()
+        );
+
+        return jobMapper.toResponse(savedJob);
+    }
+
+    private void validateJobRequest(JobCreateRequest request) {
+        if (request == null) {
+            throw new BusinessException("Du lieu tao tin khong hop le.");
+        }
+
+        if (request.title() == null || request.title().isBlank()) {
+            throw new BusinessException(
+                    "title",
+                    "Tieu de tin tuyen dung khong duoc de trong."
+            );
+        }
+
+        if (request.title().trim().length() > 200) {
+            throw new BusinessException(
+                    "title",
+                    "Tieu de khong duoc vuot qua 200 ky tu."
+            );
+        }
+
+        if (request.description() == null
+                || request.description().isBlank()) {
+            throw new BusinessException(
+                    "description",
+                    "Mo ta cong viec khong duoc de trong."
+            );
+        }
+
+        if (request.deadline() == null) {
+            throw new BusinessException(
+                    "deadline",
+                    "Han nop ho so khong duoc de trong."
+            );
+        }
+
+        if (request.deadline().isBefore(LocalDate.now())) {
+            throw new BusinessException(
+                    "deadline",
+                    "Han nop ho so phai la ngay hien tai hoac tuong lai."
+            );
+        }
+
+        if (request.departmentId() == null) {
+            throw new BusinessException(
+                    "departmentId",
+                    "Vui long chon phong ban."
+            );
+        }
+
+        if (request.salaryMin() != null
+                && request.salaryMin().signum() < 0) {
+            throw new BusinessException(
+                    "salaryMin",
+                    "Luong toi thieu khong duoc am."
+            );
+        }
+
+        if (request.salaryMax() != null
+                && request.salaryMax().signum() < 0) {
+            throw new BusinessException(
+                    "salaryMax",
+                    "Luong toi da khong duoc am."
+            );
+        }
+
+        if (request.salaryMin() != null
+                && request.salaryMax() != null
+                && request.salaryMin().compareTo(request.salaryMax()) > 0) {
+            throw new BusinessException(
+                    "salaryMin",
+                    "Luong toi thieu khong duoc lon hon luong toi da."
+            );
+        }
     }
 
 }

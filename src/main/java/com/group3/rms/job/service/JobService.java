@@ -1,6 +1,7 @@
 
 package com.group3.rms.job.service;
 
+import com.group3.rms.job.dto.JobCreateRequest;
 import com.group3.rms.job.dto.JobResponse;
 import com.group3.rms.job.dto.JobSummaryResponse;
 import com.group3.rms.job.entity.JobStatus;
@@ -17,4 +18,7 @@ public interface JobService {
     );
 
     JobResponse getJobDetail(Long jobId);
+
+    JobResponse createJob(JobCreateRequest request);
+
 }
