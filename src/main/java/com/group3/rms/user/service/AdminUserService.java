@@ -2,6 +2,7 @@ package com.group3.rms.user.service;
 
 import com.group3.rms.user.dto.AdminUserCreateRequest;
 import com.group3.rms.user.dto.AdminUserDetailResponse;
+import com.group3.rms.user.dto.AdminUserRoleUpdateRequest;
 import com.group3.rms.user.dto.AdminUserSummaryResponse;
 import org.springframework.data.domain.Page;
 
@@ -20,4 +21,6 @@ public interface AdminUserService {
     void lockUser(Long id, boolean confirmed);
 
     void unlockUser(Long id, boolean confirmed);
+
+    boolean changeUserRole(Long id, AdminUserRoleUpdateRequest request);
 }

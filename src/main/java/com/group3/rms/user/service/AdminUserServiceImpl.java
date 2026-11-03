@@ -1,5 +1,6 @@
 package com.group3.rms.user.service;
 
+import com.group3.rms.application.entity.ApplicationStatus;
 import com.group3.rms.audit.entity.AuditAction;
 import com.group3.rms.audit.entity.TargetType;
 import com.group3.rms.audit.service.AuditLogService;
@@ -8,8 +9,10 @@ import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.user.dto.AdminUserCreateRequest;
 import com.group3.rms.user.dto.AdminUserDetailResponse;
+import com.group3.rms.user.dto.AdminUserRoleUpdateRequest;
 import com.group3.rms.user.dto.AdminUserSummaryResponse;
 import com.group3.rms.user.entity.Role;
 import com.group3.rms.user.entity.RoleCode;
@@ -209,6 +212,56 @@ public class AdminUserServiceImpl implements AdminUserService {
                 user.getId(),
                 "Mở khóa tài khoản: " + user.getUsername()
         );
+    }
+
+    @Override
+    @Transactional
+    public boolean changeUserRole(Long id, AdminUserRoleUpdateRequest request) {
+        requireActiveAdmin();
+        validateUserId(id);
+
+        // Đọc vai trò dưới khóa bản ghi để các yêu cầu đồng thời không cập nhật và ghi log trùng.
+        User user = adminUserRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
+        RoleCode oldRole = getSingleRole(user);
+
+        if ((oldRole != RoleCode.HR && oldRole != RoleCode.INTERVIEWER)
+                || request == null
+                || (!"HR".equals(request.role()) && !"INTERVIEWER".equals(request.role()))) {
+            throw new BusinessException("role", "Chỉ được đổi vai trò giữa HR và INTERVIEWER.");
+        }
+
+        RoleCode newRole = RoleCode.valueOf(request.role());
+        if (oldRole == newRole) {
+            return false;
+        }
+
+        if (oldRole == RoleCode.HR) {
+            long blockingJobs = adminUserRepository.countJobsBlockingRoleChange(
+                    id,
+                    List.of(JobStatus.DRAFT, JobStatus.ACTIVE),
+                    JobStatus.CLOSED,
+                    List.of(ApplicationStatus.APPLIED, ApplicationStatus.INTERVIEW)
+            );
+            if (blockingJobs > 0) {
+                throw new BusinessException("Tài khoản còn tin tuyển dụng hoặc hồ sơ đang xử lý, không thể đổi vai trò.");
+            }
+        }
+
+        Role role = roleRepository.findByCode(newRole)
+                .orElseThrow(() -> new BusinessException("role", "Hệ thống chưa thiết lập vai trò " + newRole + "."));
+
+        user.getRoles().clear();
+        user.getRoles().add(role);
+        adminUserRepository.saveAndFlush(user);
+        auditLogService.log(
+                AuditAction.CHANGE_ROLE,
+                TargetType.USER,
+                user.getId(),
+                "Đổi vai trò tài khoản " + user.getUsername() + ": " + oldRole + " -> " + newRole
+        );
+
+        return true;
     }
 
     private void validateUserId(Long id) {

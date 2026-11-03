@@ -3,6 +3,7 @@ package com.group3.rms.user.controller;
 import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.AdminUserCreateRequest;
+import com.group3.rms.user.dto.AdminUserRoleUpdateRequest;
 import com.group3.rms.user.service.AdminUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -146,6 +147,29 @@ public class AdminUserController {
 
         adminUserService.unlockUser(id, confirmed);
         ra.addFlashAttribute("success", "Đã mở khóa tài khoản.");
+        return "redirect:/admin/users/" + id;
+    }
+
+    @PostMapping("/{id}/role")
+    public String changeUserRole(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("roleForm") AdminUserRoleUpdateRequest roleForm,
+            BindingResult bindingResult,
+            RedirectAttributes ra
+    ) {
+        try {
+            if (bindingResult.hasErrors()) {
+                // Vẫn kiểm tra quyền và tài khoản đích khi dữ liệu form không hợp lệ.
+                adminUserService.getUserDetail(id);
+                ra.addFlashAttribute("error", bindingResult.getAllErrors().getFirst().getDefaultMessage());
+            } else {
+                boolean changed = adminUserService.changeUserRole(id, roleForm);
+                ra.addFlashAttribute("success", changed ? "Đã đổi vai trò." : "Vai trò không thay đổi.");
+            }
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
+
         return "redirect:/admin/users/" + id;
     }
 

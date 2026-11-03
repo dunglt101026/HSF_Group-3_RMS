@@ -1,5 +1,7 @@
 package com.group3.rms.user.repository;
 
+import com.group3.rms.application.entity.ApplicationStatus;
+import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.user.entity.RoleCode;
 import com.group3.rms.user.entity.User;
 import com.group3.rms.user.entity.UserStatus;
@@ -28,6 +30,19 @@ public interface AdminUserRepository extends JpaRepository<User, Long> {
 
     @Query("select count(j.id) from Job j where j.owner.id = :ownerId and j.deleted = false")
     long countJobsByOwnerId(@Param("ownerId") Long ownerId);
+
+    @Query("""
+            select count(j.id) from Job j
+            where j.owner.id = :ownerId and j.deleted = false
+            and (j.status in :openJobStatuses
+                or (j.status = :closedJobStatus and exists (
+                    select a.id from Application a
+                    where a.job.id = j.id and a.status in :pendingApplicationStatuses)))
+            """)
+    long countJobsBlockingRoleChange(@Param("ownerId") Long ownerId,
+                                     @Param("openJobStatuses") List<JobStatus> openJobStatuses,
+                                     @Param("closedJobStatus") JobStatus closedJobStatus,
+                                     @Param("pendingApplicationStatuses") List<ApplicationStatus> pendingApplicationStatuses);
 
     boolean existsByUsernameIgnoreCase(String username);
 
