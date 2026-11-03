@@ -85,3 +85,5 @@ CLAUDE.local.md
 .claude/settings.local.json
 .agents/
 .codex/
+# Không cho Git theo dõi tài liệu requirements
+/docs/
