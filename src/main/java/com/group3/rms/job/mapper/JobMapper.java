@@ -23,6 +23,7 @@ public class JobMapper {
     }
 
 
+
     public JobResponse toResponse(Job job) {
         return new JobResponse(
                 job.getId(),
@@ -38,7 +39,12 @@ public class JobMapper {
                 job.getOwner().getFullName(),
                 job.getSkills().stream()
                         .map(skill -> skill.getName())
+                        .toList(),
+                job.getDepartment().getId(),
+                job.getSkills().stream()
+                        .map(skill -> skill.getId())
                         .toList()
         );
     }
+
 }

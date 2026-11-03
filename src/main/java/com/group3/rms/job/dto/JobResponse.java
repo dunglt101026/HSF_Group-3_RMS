@@ -20,6 +20,8 @@ public record JobResponse(
         LocalDateTime publishedAt,
         String departmentName,
         String ownerName,
-        List<String> skills
+        List<String> skills,
+        Long departmentId,
+        List<Long> skillIds
 ) {
 }

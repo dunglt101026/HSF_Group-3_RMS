@@ -13,6 +13,7 @@ import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.job.dto.JobCreateRequest;
 import com.group3.rms.job.dto.JobResponse;
 import com.group3.rms.job.dto.JobSummaryResponse;
+import com.group3.rms.job.dto.JobUpdateRequest;
 import com.group3.rms.job.entity.Department;
 import com.group3.rms.job.entity.Job;
 import com.group3.rms.job.entity.JobStatus;
@@ -243,6 +244,118 @@ public class JobServiceImpl implements JobService {
                     "Luong toi thieu khong duoc lon hon luong toi da."
             );
         }
+    }
+
+    //UC-13
+    @Override
+    @Transactional
+    public JobResponse updateJob(Long jobId, JobUpdateRequest request) {
+        CurrentUser currentUser = currentUserService.require();
+
+        // Chi HR moi duoc cap nhat tin.
+        if (currentUser.role() != RoleCode.HR) {
+            throw new ForbiddenException(
+                    "Chi HR moi duoc phep cap nhat tin tuyen dung."
+            );
+        }
+
+        // Tim tin chua bi xoa mem.
+        Job job = jobRepository.findByIdAndDeletedFalse(jobId)
+                .orElseThrow(() ->
+                        new NotFoundException(
+                                "Khong tim thay tin tuyen dung: " + jobId
+                        )
+                );
+
+        // Chi HR phu trach tin moi duoc sua.
+        if (!job.getOwner().getId().equals(currentUser.id())) {
+            throw new ForbiddenException(
+                    "Ban khong co quyen cap nhat tin tuyen dung nay."
+            );
+        }
+
+        // Tin CLOSED khong duoc phep sua.
+        if (job.getStatus() == JobStatus.CLOSED) {
+            throw new BusinessException(
+                    "Khong the cap nhat tin tuyen dung da dong."
+            );
+        }
+
+        if (request == null) {
+            throw new BusinessException(
+                    "Du lieu cap nhat tin khong hop le."
+            );
+        }
+
+        // Tai su dung validation cua UC-12.
+        validateJobRequest(new JobCreateRequest(
+                request.title(),
+                request.description(),
+                request.location(),
+                request.salaryMin(),
+                request.salaryMax(),
+                request.deadline(),
+                request.departmentId(),
+                request.skillIds()
+        ));
+
+        // Kiem tra phong ban.
+        Department department = departmentRepository
+                .findById(request.departmentId())
+                .orElseThrow(() ->
+                        new BusinessException(
+                                "departmentId",
+                                "Phong ban khong ton tai."
+                        )
+                );
+
+        // Cap nhat thong tin co ban.
+        job.setTitle(request.title().trim());
+        job.setDescription(request.description().trim());
+        job.setLocation(
+                request.location() == null || request.location().isBlank()
+                        ? null
+                        : request.location().trim()
+        );
+        job.setSalaryMin(request.salaryMin());
+        job.setSalaryMax(request.salaryMax());
+        job.setDeadline(request.deadline());
+        job.setDepartment(department);
+
+        // Thay the danh sach ky nang cu bang danh sach moi.
+        job.getSkills().clear();
+
+        if (request.skillIds() != null && !request.skillIds().isEmpty()) {
+            if (request.skillIds().contains(null)) {
+                throw new BusinessException(
+                        "skillIds",
+                        "Danh sach ky nang khong hop le."
+                );
+            }
+
+            var skills = skillRepository.findAllById(request.skillIds());
+
+            if (skills.size() != request.skillIds().size()) {
+                throw new BusinessException(
+                        "skillIds",
+                        "Mot hoac nhieu ky nang khong ton tai."
+                );
+            }
+
+            job.getSkills().addAll(skills);
+        }
+
+        Job updatedJob = jobRepository.save(job);
+
+        // Ghi audit log.
+        auditLogService.log(
+                AuditAction.UPDATE_JOB,
+                TargetType.JOB,
+                updatedJob.getId(),
+                "HR updated job: " + updatedJob.getTitle()
+        );
+
+        return jobMapper.toResponse(updatedJob);
     }
 
 }

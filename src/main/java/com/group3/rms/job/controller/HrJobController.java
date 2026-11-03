@@ -5,6 +5,7 @@ import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.job.dto.JobCreateRequest;
 import com.group3.rms.job.dto.JobResponse;
+import com.group3.rms.job.dto.JobUpdateRequest;
 import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.job.repository.DepartmentRepository;
 import com.group3.rms.job.repository.SkillRepository;
@@ -85,6 +86,37 @@ public class HrJobController {
         return "job/detail";
     }
 
+    @GetMapping("/{id}/edit")
+    public String showEditForm(
+            @PathVariable Long id,
+            Model model
+    ) {
+        JobResponse job = jobService.getJobDetail(id);
+
+        JobUpdateRequest form = new JobUpdateRequest(
+                job.title(),
+                job.description(),
+                job.location(),
+                job.salaryMin(),
+                job.salaryMax(),
+                job.deadline(),
+                job.departmentId(),
+                job.skillIds().stream().collect(
+                        java.util.stream.Collectors.toSet()
+                )
+        );
+
+        model.addAttribute("form", form);
+        model.addAttribute("job", job);
+
+        addFormOptions(model);
+
+        model.addAttribute("pageTitle", "Chỉnh sửa tin tuyển dụng");
+        model.addAttribute("formAction", "/hr/jobs/" + id + "/edit");
+
+        return "job/form";
+    }
+
     private void addFormOptions(Model model) {
         model.addAttribute(
                 "departments",
@@ -114,6 +146,22 @@ public class HrJobController {
         );
 
         return "redirect:/hr/jobs/" + createdJob.id();
+    }
+
+    @PostMapping("/{id}/edit")
+    public String updateJob(
+            @PathVariable Long id,
+            @ModelAttribute JobUpdateRequest request,
+            RedirectAttributes redirectAttributes
+    ) {
+        jobService.updateJob(id, request);
+
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "Cập nhật tin tuyển dụng thành công."
+        );
+
+        return "redirect:/hr/jobs/" + id;
     }
 
 }
