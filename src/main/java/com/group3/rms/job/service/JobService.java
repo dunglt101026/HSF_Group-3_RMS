@@ -24,4 +24,8 @@ public interface JobService {
 
     JobResponse updateJob(Long jobId, JobUpdateRequest request);
 
+    JobResponse publishJob(Long jobId);
+
+    JobResponse closeJob(Long jobId);
+
 }

@@ -164,4 +164,34 @@ public class HrJobController {
         return "redirect:/hr/jobs/" + id;
     }
 
+    @PostMapping("/{id}/publish")
+    public String publishJob(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        jobService.publishJob(id);
+
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "Đăng tin tuyển dụng thành công."
+        );
+
+        return "redirect:/hr/jobs/" + id;
+    }
+
+    @PostMapping("/{id}/close")
+    public String closeJob(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes
+    ) {
+        jobService.closeJob(id);
+
+        redirectAttributes.addFlashAttribute(
+                "success",
+                "Đóng tin tuyển dụng thành công."
+        );
+
+        return "redirect:/hr/jobs/" + id;
+    }
+
 }

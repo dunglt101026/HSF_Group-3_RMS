@@ -358,4 +358,83 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(updatedJob);
     }
 
+    //UC-14
+    @Override
+    @Transactional
+    public JobResponse publishJob(Long jobId) {
+        CurrentUser currentUser = currentUserService.require();
+
+        if (currentUser.role() != RoleCode.HR) {
+            throw new ForbiddenException("Chi HR moi duoc phep dang tin.");
+        }
+
+        Job job = jobRepository.findByIdAndDeletedFalse(jobId)
+                .orElseThrow(() ->
+                        new NotFoundException("Khong tim thay tin tuyen dung."));
+
+        if (!job.getOwner().getId().equals(currentUser.id())) {
+            throw new ForbiddenException("Ban khong co quyen dang tin nay.");
+        }
+
+        if (job.getStatus() != JobStatus.DRAFT) {
+            throw new BusinessException(
+                    "Chi tin DRAFT moi duoc phep dang.");
+        }
+
+        if (job.getDeadline().isBefore(java.time.LocalDate.now())) {
+            throw new BusinessException(
+                    "Khong the dang tin da qua han nop ho so.");
+        }
+
+        job.setStatus(JobStatus.ACTIVE);
+        job.setPublishedAt(LocalDateTime.now());
+
+        Job savedJob = jobRepository.save(job);
+
+        auditLogService.log(
+                AuditAction.PUBLISH_JOB,
+                TargetType.JOB,
+                savedJob.getId(),
+                "HR published job: " + savedJob.getTitle()
+        );
+
+        return jobMapper.toResponse(savedJob);
+    }
+
+    @Override
+    @Transactional
+    public JobResponse closeJob(Long jobId) {
+        CurrentUser currentUser = currentUserService.require();
+
+        if (currentUser.role() != RoleCode.HR) {
+            throw new ForbiddenException("Chi HR moi duoc phep dong tin.");
+        }
+
+        Job job = jobRepository.findByIdAndDeletedFalse(jobId)
+                .orElseThrow(() ->
+                        new NotFoundException("Khong tim thay tin tuyen dung."));
+
+        if (!job.getOwner().getId().equals(currentUser.id())) {
+            throw new ForbiddenException("Ban khong co quyen dong tin nay.");
+        }
+
+        if (job.getStatus() != JobStatus.ACTIVE) {
+            throw new BusinessException(
+                    "Chi tin ACTIVE moi duoc phep dong.");
+        }
+
+        job.setStatus(JobStatus.CLOSED);
+
+        Job savedJob = jobRepository.save(job);
+
+        auditLogService.log(
+                AuditAction.CLOSE_JOB,
+                TargetType.JOB,
+                savedJob.getId(),
+                "HR closed job: " + savedJob.getTitle()
+        );
+
+        return jobMapper.toResponse(savedJob);
+    }
+
 }
