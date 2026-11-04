@@ -13,6 +13,10 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     /** Các vòng của một hồ sơ, theo thứ tự vòng. */
     List<Interview> findByApplicationIdOrderByRoundNoAsc(Long applicationId);
 
+    /** UC-21: các vòng của hồ sơ kèm người phỏng vấn, để hiện bảng ở SCR-17. */
+    @EntityGraph(attributePaths = "interviewer")
+    List<Interview> findWithInterviewerByApplicationIdOrderByRoundNoAsc(Long applicationId);
+
     // ===== UC-24: lịch phỏng vấn của tôi — tải sẵn hồ sơ, tin, ứng viên để hiển thị bảng =====
 
     /** Tab "Sắp tới": chưa tới giờ, gần nhất trước. */
