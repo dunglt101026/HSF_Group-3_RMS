@@ -31,14 +31,19 @@
                     </li>
                     <li class="nav-item"
                         th:if="${currentUser.role.name() == 'HR'
-          or currentUser.role.name() == 'ADMIN'}">
+                          or currentUser.role.name() == 'ADMIN'}">
                         <a class="nav-link" th:href="@{/hr/jobs}">
                             <i class="bi bi-briefcase me-1"></i>
                             Tin tuyển dụng
                         </a>
                     </li>
-                    <li class="nav-item" th:if="${currentUser.role.name() == 'INTERVIEWER'}">
-                        <a class="nav-link" th:href="@{/interviews/my}">Lịch phỏng vấn</a>
+                    <!-- UC-24: Lịch phỏng vấn hiển thị cho cả INTERVIEWER và HR -->
+                    <li class="nav-item"
+                        th:if="${currentUser.role.name() == 'INTERVIEWER'
+                          or currentUser.role.name() == 'HR'}">
+                        <a class="nav-link" th:href="@{/interviews/my}">
+                            <i class="bi bi-calendar-check me-1"></i>Lịch phỏng vấn
+                        </a>
                     </li>
                     <li class="nav-item" th:if="${currentUser.role.name() == 'CANDIDATE'}">
                         <a class="nav-link" th:href="@{/jobs}">Việc làm</a>

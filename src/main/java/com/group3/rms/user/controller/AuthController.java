@@ -3,11 +3,11 @@ package com.group3.rms.user.controller;
 import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
-import com.group3.rms.user.dto.LoginRequest;
 import com.group3.rms.user.dto.RegisterRequest;
-import com.group3.rms.user.dto.UserResponse;
 import com.group3.rms.user.entity.RoleCode;
 import com.group3.rms.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,39 +29,38 @@ public class AuthController {
     private final UserService userService;
     private final CurrentUserService currentUserService;
 
+    // ── Login (GET only — POST xử lý bởi Spring Security) ─────────────────
+
     @GetMapping("/login")
-    public String loginPage(Model model) {
+    public String loginPage(
+            HttpServletRequest request,
+            Model model
+    ) {
+        // Nếu đã đăng nhập thì redirect về trang chính theo role
         Optional<CurrentUser> currentOpt = currentUserService.get();
         if (currentOpt.isPresent()) {
             return "redirect:" + redirectUrlForRole(currentOpt.get().role());
         }
 
-        if (!model.containsAttribute("form")) {
-            model.addAttribute("form", new LoginRequest("", ""));
+        // Lấy thông báo lỗi từ Spring Security failure handler
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            String loginError = (String) session.getAttribute("loginError");
+            if (loginError != null) {
+                model.addAttribute("errorMessage", loginError);
+                session.removeAttribute("loginError");
+            }
         }
+
+        // Thông báo đăng xuất thành công
+        if (request.getParameter("logout") != null) {
+            model.addAttribute("successMessage", "Bạn đã đăng xuất thành công.");
+        }
+
         return "auth/login";
     }
 
-    @PostMapping("/login")
-    public String login(
-            @Valid @ModelAttribute("form") LoginRequest form,
-            BindingResult bindingResult,
-            Model model,
-            RedirectAttributes ra
-    ) {
-        if (bindingResult.hasErrors()) {
-            return "auth/login";
-        }
-
-        try {
-            UserResponse user = userService.login(form);
-            ra.addFlashAttribute("success", "Đăng nhập thành công. Xin chào " + user.fullName() + "!");
-            return "redirect:" + redirectUrlForRole(user.role());
-        } catch (BusinessException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            return "auth/login";
-        }
-    }
+    // ── Register ───────────────────────────────────────────────────────────
 
     @GetMapping("/register")
     public String registerPage(Model model) {
@@ -97,28 +96,15 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/logout")
-    public String logout(RedirectAttributes ra) {
-        log.info("Xử lý đăng xuất tài khoản");
-        currentUserService.clear();
-        ra.addFlashAttribute("success", "Bạn đã đăng xuất thành công.");
-        return "redirect:/login";
-    }
-
-    @GetMapping("/logout")
-    public String logoutGet(RedirectAttributes ra) {
-        return logout(ra);
-    }
+    // ── Helpers ────────────────────────────────────────────────────────────
 
     private String redirectUrlForRole(RoleCode role) {
-        if (role == null) {
-            return "/";
-        }
+        if (role == null) return "/";
         return switch (role) {
-            case ADMIN -> "/admin/users";
-            case HR -> "/hr/jobs";
+            case ADMIN       -> "/admin/users";
+            case HR          -> "/hr/jobs";
             case INTERVIEWER -> "/interviews/my";
-            case CANDIDATE -> "/";
+            case CANDIDATE   -> "/";
         };
     }
 }
