@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/staff}">
+
+<head>
+    <title>Chi tiết tin tuyển dụng</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <a th:href="@{/hr/jobs}" class="text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+        </a>
+
+        <div class="d-flex gap-2 flex-wrap">
+
+            <a th:if="${job.status.name() != 'CLOSED'}"
+               th:href="@{/hr/jobs/{id}/edit(id=${job.id})}"
+               class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i>Sửa
+            </a>
+
+            <form th:if="${job.status.name() == 'DRAFT'}"
+                  th:action="@{/hr/jobs/{id}/publish(id=${job.id})}"
+                  method="post"
+                  onsubmit="return confirm('Bạn có chắc muốn đăng tin này?')">
+                <button class="btn btn-success" type="submit">
+                    <i class="bi bi-send me-1"></i>Đăng tuyển
+                </button>
+            </form>
+
+            <form th:if="${job.status.name() == 'ACTIVE'}"
+                  th:action="@{/hr/jobs/{id}/close(id=${job.id})}"
+                  method="post"
+                  onsubmit="return confirm('Bạn có chắc muốn đóng tin này?')">
+                <button class="btn btn-warning" type="submit">
+                    <i class="bi bi-lock me-1"></i>Đóng tin
+                </button>
+            </form>
+
+            <form th:if="${job.status.name() == 'DRAFT'}"
+                  th:action="@{/hr/jobs/{id}/delete(id=${job.id})}"
+                  method="post"
+                  onsubmit="return confirm('Bạn chắc chắn muốn xóa tin tuyển dụng này?')">
+                <button class="btn btn-outline-danger" type="submit">
+                    <i class="bi bi-trash me-1"></i>Xóa
+                </button>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h2 class="page-heading mb-2" th:text="${job.title}"></h2>
+                    <div class="text-muted">
+                        <i class="bi bi-building me-1"></i>
+                        <span th:text="${job.departmentName}"></span>
+                        <span class="mx-2">|</span>
+                        <i class="bi bi-geo-alt me-1"></i>
+                        <span th:text="${job.location != null ? job.location : 'Chưa cập nhật'}"></span>
+                    </div>
+                </div>
+
+                <span th:if="${job.status.name() == 'DRAFT'}"
+                      class="badge text-bg-secondary fs-6">Nháp</span>
+                <span th:if="${job.status.name() == 'ACTIVE'}"
+                      class="badge text-bg-success fs-6">Đang tuyển</span>
+                <span th:if="${job.status.name() == 'CLOSED'}"
+                      class="badge text-bg-dark fs-6">Đã đóng</span>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="text-muted small">Phòng ban</div>
+                    <div class="fw-semibold" th:text="${job.departmentName}"></div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">HR phụ trách</div>
+                    <div class="fw-semibold" th:text="${job.ownerName}"></div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">Địa điểm</div>
+                    <div class="fw-semibold"
+                         th:text="${job.location != null ? job.location : 'Chưa cập nhật'}"></div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">Lương tối thiểu</div>
+                    <div class="fw-semibold"
+                         th:text="${job.salaryMin != null ? #numbers.formatDecimal(job.salaryMin, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : 'Thỏa thuận'}"></div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">Lương tối đa</div>
+                    <div class="fw-semibold"
+                         th:text="${job.salaryMax != null ? #numbers.formatDecimal(job.salaryMax, 0, 'COMMA', 0, 'POINT') + ' VNĐ' : 'Thỏa thuận'}"></div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">Hạn nộp hồ sơ</div>
+                    <div class="fw-semibold"
+                         th:text="${#temporals.format(job.deadline, 'dd/MM/yyyy')}"></div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">Ngày đăng</div>
+                    <div class="fw-semibold"
+                         th:text="${job.publishedAt != null ? #temporals.format(job.publishedAt, 'dd/MM/yyyy HH:mm') : 'Chưa đăng'}"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-file-text me-2"></i>Mô tả công việc
+            </h5>
+
+            <div class="text-break"
+                 style="white-space: pre-line"
+                 th:text="${job.description}">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-tools me-2"></i>Kỹ năng yêu cầu
+            </h5>
+
+            <div th:if="${!job.skills.isEmpty()}">
+                <span th:each="skill : ${job.skills}"
+                      class="badge text-bg-light border text-dark me-2 mb-2 p-2"
+                      th:text="${skill}">
+                </span>
+            </div>
+
+            <p th:if="${job.skills.isEmpty()}" class="text-muted mb-0">
+                Chưa có kỹ năng được cập nhật.
+            </p>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

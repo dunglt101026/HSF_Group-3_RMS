@@ -1,79 +1,85 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
-    <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-        <div class="container-fluid">
-            <!-- Brand -->
-            <a class="navbar-brand fw-bold" th:href="@{/}">
-                <i class="bi bi-briefcase-fill text-primary me-2"></i>RMS
-            </a>
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold" th:href="@{/}">
+            <i class="bi bi-briefcase-fill text-primary me-2"></i>RMS
+        </a>
 
-            <!-- Toggle button for mobile -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rmsNavbar"
-                    aria-controls="rmsNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <!-- Toggle button for mobile -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rmsNavbar"
+                aria-controls="rmsNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <!-- Links & User info -->
-            <div class="collapse navbar-collapse" id="rmsNavbar">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" th:href="@{/demo}">Kiểm tra hệ thống</a>
+        <!-- Links & User info -->
+        <div class="collapse navbar-collapse" id="rmsNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/demo}">Kiểm tra hệ thống</a>
+                </li>
+
+                <!-- Menu dành cho người dùng đã đăng nhập theo vai trò -->
+                <th:block th:if="${currentUser != null}">
+                    <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
+                        <a class="nav-link" th:href="@{/admin/users}">Quản lý tài khoản</a>
                     </li>
-
-                    <!-- Menu dành cho người dùng đã đăng nhập theo vai trò -->
-                    <th:block th:if="${currentUser != null}">
-                        <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
-                            <a class="nav-link" th:href="@{/admin/users}">Quản lý tài khoản</a>
-                        </li>
-                        <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
-                            <a class="nav-link" th:href="@{/admin/activity-logs}">Nhật ký hoạt động</a>
-                        </li>
-                        <li class="nav-item" th:if="${currentUser.role.name() == 'HR'}">
-                            <a class="nav-link" th:href="@{/hr/jobs}">Tin tuyển dụng</a>
-                        </li>
-                        <li class="nav-item" th:if="${currentUser.role.name() == 'INTERVIEWER'}">
-                            <a class="nav-link" th:href="@{/interviews/my}">Lịch phỏng vấn</a>
-                        </li>
-                        <li class="nav-item" th:if="${currentUser.role.name() == 'CANDIDATE'}">
-                            <a class="nav-link" th:href="@{/jobs}">Việc làm</a>
-                        </li>
-                        <li class="nav-item" th:if="${currentUser.role.name() == 'CANDIDATE'}">
-                            <a class="nav-link" th:href="@{/my/applications}">Hồ sơ của tôi</a>
-                        </li>
-                    </th:block>
-                </ul>
-
-                <!-- Phía bên phải: Người dùng & Đăng xuất / Đăng nhập -->
-                <div class="d-flex align-items-center gap-2">
-                    <!-- Khi đã đăng nhập -->
-                    <div th:if="${currentUser != null}" class="d-flex align-items-center gap-3">
-                        <div class="text-light small">
-                            <span class="fw-semibold" th:text="${currentUser.fullName}">Người dùng</span>
-                            <span class="badge bg-primary ms-1" th:text="${currentUser.role}">VAI TRÒ</span>
-                        </div>
-                        <a th:href="@{/profile}" class="btn btn-outline-light btn-sm" title="Thông tin cá nhân">
-                            <i class="bi bi-person-circle"></i>
+                    <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
+                        <a class="nav-link" th:href="@{/admin/activity-logs}">Nhật ký hoạt động</a>
+                    </li>
+                    <li class="nav-item"
+                        th:if="${currentUser.role.name() == 'HR'
+          or currentUser.role.name() == 'ADMIN'}">
+                        <a class="nav-link" th:href="@{/hr/jobs}">
+                            <i class="bi bi-briefcase me-1"></i>
+                            Tin tuyển dụng
                         </a>
-                        <form th:action="@{/logout}" method="post" class="d-inline m-0">
-                            <button type="submit" class="btn btn-danger btn-sm" id="logoutBtn" title="Đăng xuất khỏi hệ thống">
-                                <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
-                            </button>
-                        </form>
+                    </li>
+                    <li class="nav-item" th:if="${currentUser.role.name() == 'INTERVIEWER'}">
+                        <a class="nav-link" th:href="@{/interviews/my}">Lịch phỏng vấn</a>
+                    </li>
+                    <li class="nav-item" th:if="${currentUser.role.name() == 'CANDIDATE'}">
+                        <a class="nav-link" th:href="@{/jobs}">Việc làm</a>
+                    </li>
+                    <li class="nav-item" th:if="${currentUser.role.name() == 'CANDIDATE'}">
+                        <a class="nav-link" th:href="@{/my/applications}">Hồ sơ của tôi</a>
+                    </li>
+                </th:block>
+            </ul>
+
+            <!-- Phía bên phải: Người dùng & Đăng xuất / Đăng nhập -->
+            <div class="d-flex align-items-center gap-2">
+                <!-- Khi đã đăng nhập -->
+                <div th:if="${currentUser != null}" class="d-flex align-items-center gap-3">
+                    <div class="text-light small">
+                        <span class="fw-semibold" th:text="${currentUser.fullName}">Người dùng</span>
+                        <span class="badge bg-primary ms-1" th:text="${currentUser.role}">VAI TRÒ</span>
                     </div>
+                    <a th:href="@{/profile}" class="btn btn-outline-light btn-sm" title="Thông tin cá nhân">
+                        <i class="bi bi-person-circle"></i>
+                    </a>
+                    <form th:action="@{/logout}" method="post" class="d-inline m-0">
+                        <button type="submit" class="btn btn-danger btn-sm" id="logoutBtn"
+                                title="Đăng xuất khỏi hệ thống">
+                            <i class="bi bi-box-arrow-right me-1"></i> Đăng xuất
+                        </button>
+                    </form>
+                </div>
 
-                    <!-- Khi chưa đăng nhập (Guest) -->
-                    <div th:if="${currentUser == null}" class="d-flex gap-2">
-                        <a th:href="@{/login}" class="btn btn-outline-light btn-sm">
-                            <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
-                        </a>
-                        <a th:href="@{/register}" class="btn btn-primary btn-sm">
-                            <i class="bi bi-person-plus me-1"></i> Đăng ký
-                        </a>
-                    </div>
+                <!-- Khi chưa đăng nhập (Guest) -->
+                <div th:if="${currentUser == null}" class="d-flex gap-2">
+                    <a th:href="@{/login}" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
+                    </a>
+                    <a th:href="@{/register}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus me-1"></i> Đăng ký
+                    </a>
                 </div>
             </div>
         </div>
-    </nav>
+    </div>
+</nav>
 </body>
 </html>

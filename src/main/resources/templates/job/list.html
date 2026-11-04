@@ -1,0 +1,182 @@
+
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/staff}">
+
+<head>
+    <title>Quản lý tin tuyển dụng</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h2 class="page-heading mb-1">Quản lý tin tuyển dụng</h2>
+            <p class="text-muted mb-0">
+                Theo dõi và quản lý các tin tuyển dụng.
+            </p>
+        </div>
+
+        <a th:href="@{/hr/jobs/new}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>
+            Tạo tin tuyển dụng
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" th:action="@{/hr/jobs}">
+                <div class="row g-3 align-items-end">
+
+                    <div class="col-lg-4 col-md-6">
+                        <label for="keyword" class="form-label">Từ khóa</label>
+                        <input id="keyword"
+                               name="keyword"
+                               class="form-control"
+                               placeholder="Tên vị trí..."
+                               th:value="${keyword}">
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <label for="status" class="form-label">Trạng thái</label>
+                        <select id="status" name="status" class="form-select">
+                            <option value="">Tất cả</option>
+                            <option th:each="item : ${statuses}"
+                                    th:value="${item}"
+                                    th:text="${item == T(com.group3.rms.job.entity.JobStatus).DRAFT ? 'Nháp' :
+                                               item == T(com.group3.rms.job.entity.JobStatus).ACTIVE ? 'Đang tuyển' : 'Đã đóng'}"
+                                    th:selected="${item == selectedStatus}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="mine" class="form-label">Phạm vi</label>
+                        <select id="mine" name="mine" class="form-select">
+                            <option value="true" th:selected="${mine}">Tin của tôi</option>
+                            <option value="false" th:selected="${!mine}">Tất cả tin</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6 d-flex gap-2">
+                        <button class="btn btn-primary flex-grow-1" type="submit">
+                            <i class="bi bi-search me-1"></i>Tìm kiếm
+                        </button>
+                        <a th:href="@{/hr/jobs}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
+
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0">Danh sách tin tuyển dụng</h5>
+                <span class="text-muted small"
+                      th:text="'Tổng: ' + ${jobs.totalElements} + ' tin'">
+                </span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Tiêu đề</th>
+                        <th>Phòng ban</th>
+                        <th>HR phụ trách</th>
+                        <th>Trạng thái</th>
+                        <th>Hạn nộp</th>
+                        <th class="text-center">Hồ sơ</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="job : ${jobs.content}">
+                        <td>
+                            <a th:href="@{/hr/jobs/{id}(id=${job.id})}"
+                               class="fw-semibold text-decoration-none"
+                               th:text="${job.title}">
+                            </a>
+                        </td>
+
+                        <td th:text="${job.departmentName}"></td>
+                        <td th:text="${job.ownerName}"></td>
+
+                        <td>
+                            <span th:if="${job.status.name() == 'DRAFT'}"
+                                  class="badge text-bg-secondary">Nháp</span>
+                            <span th:if="${job.status.name() == 'ACTIVE'}"
+                                  class="badge text-bg-success">Đang tuyển</span>
+                            <span th:if="${job.status.name() == 'CLOSED'}"
+                                  class="badge text-bg-dark">Đã đóng</span>
+                        </td>
+
+                        <td th:text="${#temporals.format(job.deadline, 'dd/MM/yyyy')}"></td>
+
+                        <td class="text-center">
+                            <span class="badge text-bg-light border text-dark"
+                                  th:text="${job.applicationCount}"></span>
+                        </td>
+
+                        <td class="text-center">
+                            <a th:href="@{/hr/jobs/{id}(id=${job.id})}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                                Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${jobs.empty}">
+                        <td colspan="7" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted"></i>
+                            <p class="text-muted mt-2 mb-0">
+                                Không tìm thấy tin tuyển dụng nào.
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav th:if="${jobs.totalPages > 1}">
+                <ul class="pagination justify-content-end mb-0">
+
+                    <li class="page-item" th:classappend="${jobs.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/hr/jobs(page=${jobs.number - 1}, keyword=${keyword}, status=${selectedStatus}, mine=${mine})}">
+                            Trước
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link"
+                              th:text="${jobs.number + 1} + ' / ' + ${jobs.totalPages}">
+                        </span>
+                    </li>
+
+                    <li class="page-item" th:classappend="${jobs.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/hr/jobs(page=${jobs.number + 1}, keyword=${keyword}, status=${selectedStatus}, mine=${mine})}">
+                            Sau
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+
+</main>
+</body>
+</html>
