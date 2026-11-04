@@ -9,12 +9,14 @@ package com.group3.rms.application.dto;
  * @param canApprove APPLIED → INTERVIEW
  * @param canReject  APPLIED / INTERVIEW → REJECTED
  * @param canHire    INTERVIEW → HIRED (service còn kiểm tra mọi vòng đã đánh giá)
+ * @param canSchedule lên lịch vòng phỏng vấn mới (hồ sơ đang INTERVIEW)
  */
 public record ApplicationActions(
         boolean hrViewer,
         boolean jobOwner,
         boolean canApprove,
         boolean canReject,
-        boolean canHire
+        boolean canHire,
+        boolean canSchedule
 ) {
 }

@@ -1,12 +1,20 @@
 package com.group3.rms.interview.repository;
 
+import com.group3.rms.interview.dto.InterviewerOptionResponse;
 import com.group3.rms.interview.entity.Interview;
 import com.group3.rms.interview.entity.InterviewStatus;
+import com.group3.rms.user.entity.RoleCode;
+import com.group3.rms.user.entity.User;
+import com.group3.rms.user.entity.UserStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
@@ -39,4 +47,31 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
             Long interviewerId, InterviewStatus status, LocalDateTime now);
 
     long countByInterviewerIdAndStatus(Long interviewerId, InterviewStatus status);
+
+    // ===== UC-23: lên lịch phỏng vấn =====
+
+    /** Số vòng hiện có của hồ sơ; vòng mới = số này + 1. */
+    long countByApplicationId(Long applicationId);
+
+    /**
+     * Danh sách người có thể được giao phỏng vấn: tài khoản đang hoạt động, vai trò HR hoặc Interviewer,
+     * sắp theo tên. Chỉ đọc bảng users (không ghi), nên đặt ở đây để không sửa repository của chức năng user.
+     */
+    @Query("""
+            select new com.group3.rms.interview.dto.InterviewerOptionResponse(u.id, u.fullName, r.code)
+            from User u join u.roles r
+            where u.status = :status and r.code in :roles
+            order by u.fullName asc
+            """)
+    List<InterviewerOptionResponse> findAssignableInterviewers(@Param("status") UserStatus status,
+                                                               @Param("roles") Collection<RoleCode> roles);
+
+    /** Kiểm tra lại người phỏng vấn được chọn khi lưu (có thể vừa bị khóa / đổi vai trò). */
+    @Query("""
+            select u from User u join u.roles r
+            where u.id = :id and u.status = :status and r.code in :roles
+            """)
+    Optional<User> findAssignableInterviewer(@Param("id") Long id,
+                                             @Param("status") UserStatus status,
+                                             @Param("roles") Collection<RoleCode> roles);
 }

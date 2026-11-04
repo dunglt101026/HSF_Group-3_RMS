@@ -2,8 +2,18 @@ package com.group3.rms.interview.service;
 
 import com.group3.rms.application.entity.Application;
 import com.group3.rms.application.entity.ApplicationStatus;
+import com.group3.rms.application.repository.ApplicationRepository;
+import com.group3.rms.audit.entity.AuditAction;
+import com.group3.rms.audit.entity.TargetType;
+import com.group3.rms.audit.service.AuditLogService;
+import com.group3.rms.common.exception.BusinessException;
+import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.interview.dto.InterviewCreateRequest;
+import com.group3.rms.interview.dto.InterviewScheduleFormResponse;
+import com.group3.rms.interview.dto.InterviewScheduledResponse;
+import com.group3.rms.interview.dto.InterviewerOptionResponse;
 import com.group3.rms.interview.dto.MyInterviewScheduleResponse;
 import com.group3.rms.interview.dto.MyInterviewTab;
 import com.group3.rms.interview.entity.Interview;
@@ -11,22 +21,30 @@ import com.group3.rms.interview.entity.InterviewStatus;
 import com.group3.rms.interview.mapper.InterviewMapperImpl;
 import com.group3.rms.interview.repository.InterviewRepository;
 import com.group3.rms.user.entity.RoleCode;
+import com.group3.rms.user.entity.UserStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static com.group3.rms.interview.InterviewTestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,13 +54,20 @@ class InterviewServiceImplTest {
     InterviewRepository interviewRepository;
 
     @Mock
+    ApplicationRepository applicationRepository;
+
+    @Mock
     CurrentUserService currentUserService;
+
+    @Mock
+    AuditLogService auditLogService;
 
     InterviewServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new InterviewServiceImpl(interviewRepository, new InterviewMapperImpl(), currentUserService);
+        service = new InterviewServiceImpl(interviewRepository, applicationRepository,
+                new InterviewMapperImpl(), currentUserService, auditLogService);
     }
 
     @Nested
@@ -100,6 +125,121 @@ class InterviewServiceImplTest {
             assertThat(result.tab()).isEqualTo(MyInterviewTab.UPCOMING);
             assertThat(result.interviews()).singleElement()
                     .satisfies(row -> assertThat(row.canEvaluate()).isFalse());
+        }
+    }
+
+    @Nested
+    @DisplayName("UC-23: Lên lịch phỏng vấn")
+    class ScheduleInterview {
+
+        final LocalDate tomorrow = LocalDate.now().plusDays(1);
+        final InterviewCreateRequest validRequest =
+                new InterviewCreateRequest(INTERVIEWER_ID, tomorrow, LocalTime.of(9, 30), "  Phòng họp 301  ");
+
+        @Test
+        @DisplayName("Form: vòng tiếp theo = số vòng hiện có + 1, kèm danh sách người phỏng vấn")
+        void formData() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            when(applicationRepository.findDetailById(1L))
+                    .thenReturn(Optional.of(application(1L, ApplicationStatus.INTERVIEW)));
+            when(interviewRepository.countByApplicationId(1L)).thenReturn(2L);
+            List<InterviewerOptionResponse> options =
+                    List.of(new InterviewerOptionResponse(INTERVIEWER_ID, "Người phỏng vấn", RoleCode.INTERVIEWER));
+            when(interviewRepository.findAssignableInterviewers(UserStatus.ACTIVE,
+                    List.of(RoleCode.HR, RoleCode.INTERVIEWER))).thenReturn(options);
+
+            InterviewScheduleFormResponse form = service.getScheduleForm(1L);
+
+            assertThat(form.nextRoundNo()).isEqualTo(3);
+            assertThat(form.candidateName()).isEqualTo("Nguyễn Văn An");
+            assertThat(form.interviewers()).isEqualTo(options);
+        }
+
+        @Test
+        @DisplayName("Hồ sơ không tồn tại → NotFoundException")
+        void notFound() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            when(applicationRepository.findByIdForUpdate(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.scheduleInterview(99L, validRequest))
+                    .isInstanceOf(NotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Không phải HR phụ trách → 403")
+        void notOwnerForbidden() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OTHER_ID, RoleCode.HR));
+            when(applicationRepository.findByIdForUpdate(1L))
+                    .thenReturn(Optional.of(application(1L, ApplicationStatus.INTERVIEW)));
+
+            assertThatThrownBy(() -> service.scheduleInterview(1L, validRequest))
+                    .isInstanceOf(ForbiddenException.class);
+        }
+
+        @Test
+        @DisplayName("Hồ sơ chưa duyệt (APPLIED) → không lên lịch được")
+        void applicationNotInInterview() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            when(applicationRepository.findByIdForUpdate(1L))
+                    .thenReturn(Optional.of(application(1L, ApplicationStatus.APPLIED)));
+
+            assertThatThrownBy(() -> service.scheduleInterview(1L, validRequest))
+                    .isInstanceOf(BusinessException.class);
+            verify(interviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Thời gian không ở tương lai → lỗi gắn vào ô ngày")
+        void pastTime() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            when(applicationRepository.findByIdForUpdate(1L))
+                    .thenReturn(Optional.of(application(1L, ApplicationStatus.INTERVIEW)));
+            InterviewCreateRequest past = new InterviewCreateRequest(
+                    INTERVIEWER_ID, LocalDate.now().minusDays(1), LocalTime.of(9, 0), "Phòng 1");
+
+            assertThatThrownBy(() -> service.scheduleInterview(1L, past))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage("Thời gian phỏng vấn phải sau thời điểm hiện tại.")
+                    .extracting("field").isEqualTo("scheduledDate");
+        }
+
+        @Test
+        @DisplayName("Người phỏng vấn bị khóa / sai vai trò → lỗi gắn vào ô người phỏng vấn")
+        void invalidInterviewer() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            when(applicationRepository.findByIdForUpdate(1L))
+                    .thenReturn(Optional.of(application(1L, ApplicationStatus.INTERVIEW)));
+            when(interviewRepository.findAssignableInterviewer(eq(INTERVIEWER_ID), eq(UserStatus.ACTIVE), any()))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.scheduleInterview(1L, validRequest))
+                    .isInstanceOf(BusinessException.class)
+                    .extracting("field").isEqualTo("interviewerId");
+        }
+
+        @Test
+        @DisplayName("Hợp lệ → tạo vòng mới SCHEDULED và ghi nhật ký")
+        void scheduleSuccess() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            Application application = application(1L, ApplicationStatus.INTERVIEW);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+            when(interviewRepository.findAssignableInterviewer(eq(INTERVIEWER_ID), eq(UserStatus.ACTIVE), any()))
+                    .thenReturn(Optional.of(user(INTERVIEWER_ID, "Phỏng Vấn Viên")));
+            when(interviewRepository.countByApplicationId(1L)).thenReturn(1L);
+            when(interviewRepository.save(any(Interview.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            InterviewScheduledResponse result = service.scheduleInterview(1L, validRequest);
+
+            ArgumentCaptor<Interview> saved = ArgumentCaptor.forClass(Interview.class);
+            verify(interviewRepository).save(saved.capture());
+            assertThat(saved.getValue().getRoundNo()).isEqualTo(2);
+            assertThat(saved.getValue().getStatus()).isEqualTo(InterviewStatus.SCHEDULED);
+            assertThat(saved.getValue().getScheduledAt()).isEqualTo(tomorrow.atTime(9, 30));
+            assertThat(saved.getValue().getLocation()).isEqualTo("Phòng họp 301");
+            assertThat(result.roundNo()).isEqualTo(2);
+            assertThat(result.interviewerName()).isEqualTo("Phỏng Vấn Viên");
+            verify(auditLogService).log(eq(AuditAction.SCHEDULE_INTERVIEW), eq(TargetType.INTERVIEW), any(),
+                    anyString());
         }
     }
 }

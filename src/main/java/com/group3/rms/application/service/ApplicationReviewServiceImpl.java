@@ -148,6 +148,7 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
                 owner,
                 owner && status == ApplicationStatus.APPLIED,
                 owner && (status == ApplicationStatus.APPLIED || status == ApplicationStatus.INTERVIEW),
+                owner && status == ApplicationStatus.INTERVIEW,
                 owner && status == ApplicationStatus.INTERVIEW
         );
     }

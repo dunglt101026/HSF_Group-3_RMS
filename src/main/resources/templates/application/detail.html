@@ -48,6 +48,12 @@
 
         <!-- Nhóm nút xử lý (UC-22, UC-23) -->
         <div class="d-flex gap-2 flex-wrap">
+            <a th:if="${app.actions.canSchedule}"
+               th:href="@{/applications/{id}/interviews/new(id=${app.id})}"
+               class="btn btn-outline-primary">
+                <i class="bi bi-calendar-plus me-1"></i>Lên lịch phỏng vấn
+            </a>
+
             <form th:if="${app.actions.canApprove}"
                   th:action="@{/applications/{id}/approve(id=${app.id})}" method="post"
                   onsubmit="return confirm('Duyệt hồ sơ này và chuyển sang vòng phỏng vấn?')">
