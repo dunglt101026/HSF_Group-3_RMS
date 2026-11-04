@@ -5,6 +5,10 @@ import com.group3.rms.application.entity.Application;
 import com.group3.rms.application.entity.ApplicationStatus;
 import com.group3.rms.application.mapper.ApplicationMapperImpl;
 import com.group3.rms.application.repository.ApplicationRepository;
+import com.group3.rms.audit.entity.AuditAction;
+import com.group3.rms.audit.entity.TargetType;
+import com.group3.rms.audit.service.AuditLogService;
+import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUserService;
@@ -28,6 +32,11 @@ import java.util.Optional;
 import static com.group3.rms.interview.InterviewTestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +51,9 @@ class ApplicationReviewServiceImplTest {
     @Mock
     CurrentUserService currentUserService;
 
+    @Mock
+    AuditLogService auditLogService;
+
     ApplicationReviewServiceImpl service;
 
     @BeforeEach
@@ -51,7 +63,8 @@ class ApplicationReviewServiceImplTest {
                 interviewRepository,
                 new ApplicationMapperImpl(),
                 new InterviewMapperImpl(),
-                currentUserService
+                currentUserService,
+                auditLogService
         );
     }
 
@@ -103,6 +116,9 @@ class ApplicationReviewServiceImplTest {
             assertThat(detail.candidateFullName()).isEqualTo("Nguyễn Văn An");
             assertThat(detail.actions().hrViewer()).isTrue();
             assertThat(detail.actions().jobOwner()).isTrue();
+            assertThat(detail.actions().canHire()).isTrue();
+            assertThat(detail.actions().canReject()).isTrue();
+            assertThat(detail.actions().canApprove()).isFalse();
             assertThat(detail.interviews()).allSatisfy(round -> {
                 assertThat(round.evaluationVisible()).isTrue();
                 assertThat(round.rating()).isEqualTo(4);
@@ -121,6 +137,7 @@ class ApplicationReviewServiceImplTest {
 
             assertThat(detail.actions().hrViewer()).isTrue();
             assertThat(detail.actions().jobOwner()).isFalse();
+            assertThat(detail.actions().canReject()).isFalse();
         }
 
         @Test
@@ -150,6 +167,113 @@ class ApplicationReviewServiceImplTest {
                     .thenReturn(List.of(other));
 
             assertThatThrownBy(() -> service.getDetail(1L)).isInstanceOf(ForbiddenException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("UC-22: Xử lý hồ sơ")
+    class ChangeStatus {
+
+        @BeforeEach
+        void loginAsOwner() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+        }
+
+        @Test
+        @DisplayName("Duyệt: APPLIED → INTERVIEW, ghi thời điểm đổi và nhật ký")
+        void approveApplied() {
+            Application application = application(1L, ApplicationStatus.APPLIED);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+
+            service.approve(1L);
+
+            assertThat(application.getStatus()).isEqualTo(ApplicationStatus.INTERVIEW);
+            assertThat(application.getStatusChangedAt()).isNotNull();
+            verify(auditLogService).log(AuditAction.CHANGE_APPLICATION_STATUS, TargetType.APPLICATION, 1L,
+                    "Hồ sơ #1: APPLIED → INTERVIEW");
+        }
+
+        @Test
+        @DisplayName("Loại được cả khi APPLIED lẫn INTERVIEW")
+        void rejectInterview() {
+            Application application = application(1L, ApplicationStatus.INTERVIEW);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+
+            service.reject(1L);
+
+            assertThat(application.getStatus()).isEqualTo(ApplicationStatus.REJECTED);
+        }
+
+        @Test
+        @DisplayName("Không phải HR phụ trách → 403, không đổi trạng thái")
+        void notOwnerForbidden() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OTHER_ID, RoleCode.HR));
+            Application application = application(1L, ApplicationStatus.APPLIED);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> service.approve(1L)).isInstanceOf(ForbiddenException.class);
+            assertThat(application.getStatus()).isEqualTo(ApplicationStatus.APPLIED);
+        }
+
+        @Test
+        @DisplayName("Trạng thái kết thúc không chuyển tiếp được")
+        void finishedStatusRejected() {
+            Application application = application(1L, ApplicationStatus.WITHDRAWN);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> service.reject(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Đã rút");
+            verify(auditLogService, never()).log(any(), any(), anyLong(), anyString());
+        }
+
+        @Test
+        @DisplayName("Không tuyển thẳng từ APPLIED")
+        void cannotHireFromApplied() {
+            Application application = application(1L, ApplicationStatus.APPLIED);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> service.hire(1L)).isInstanceOf(BusinessException.class);
+        }
+
+        @Test
+        @DisplayName("Tuyển khi chưa có vòng phỏng vấn nào → lỗi")
+        void hireWithoutInterview() {
+            Application application = application(1L, ApplicationStatus.INTERVIEW);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+            when(interviewRepository.findByApplicationIdOrderByRoundNoAsc(1L)).thenReturn(List.of());
+
+            assertThatThrownBy(() -> service.hire(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage("Cần hoàn tất đánh giá tất cả các vòng phỏng vấn trước khi tuyển.");
+        }
+
+        @Test
+        @DisplayName("Tuyển khi còn vòng chưa đánh giá → lỗi")
+        void hireWithPendingRound() {
+            Application application = application(1L, ApplicationStatus.INTERVIEW);
+            LocalDateTime past = LocalDateTime.now().minusDays(1);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+            when(interviewRepository.findByApplicationIdOrderByRoundNoAsc(1L)).thenReturn(List.of(
+                    interview(11L, application, INTERVIEWER_ID, 1, past, InterviewStatus.EVALUATED),
+                    interview(12L, application, INTERVIEWER_ID, 2, past, InterviewStatus.SCHEDULED)));
+
+            assertThatThrownBy(() -> service.hire(1L)).isInstanceOf(BusinessException.class);
+            assertThat(application.getStatus()).isEqualTo(ApplicationStatus.INTERVIEW);
+        }
+
+        @Test
+        @DisplayName("Tuyển khi mọi vòng đã đánh giá → HIRED")
+        void hireWhenAllEvaluated() {
+            Application application = application(1L, ApplicationStatus.INTERVIEW);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(application));
+            when(interviewRepository.findByApplicationIdOrderByRoundNoAsc(1L)).thenReturn(List.of(
+                    interview(11L, application, INTERVIEWER_ID, 1, LocalDateTime.now().minusDays(1),
+                            InterviewStatus.EVALUATED)));
+
+            service.hire(1L);
+
+            assertThat(application.getStatus()).isEqualTo(ApplicationStatus.HIRED);
         }
     }
 }
