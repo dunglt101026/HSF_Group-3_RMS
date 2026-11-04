@@ -57,8 +57,8 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // HR only
                 .requestMatchers("/hr/**").hasRole("HR")
-                // Interviewer and Admin
-                .requestMatchers("/interviews/**").hasAnyRole("INTERVIEWER", "ADMIN")
+                // Interviewer, HR and Admin (UC-24 dành cho cả HR)
+                .requestMatchers("/interviews/**").hasAnyRole("INTERVIEWER", "HR", "ADMIN")
                 // Any authenticated user
                 .requestMatchers("/profile/**").authenticated()
                 // Trang chủ ứng viên
