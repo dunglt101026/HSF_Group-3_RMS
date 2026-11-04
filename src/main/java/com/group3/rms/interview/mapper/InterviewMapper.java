@@ -1,5 +1,6 @@
 package com.group3.rms.interview.mapper;
 
+import com.group3.rms.interview.dto.InterviewEvaluationResponse;
 import com.group3.rms.interview.dto.InterviewRoundResponse;
 import com.group3.rms.interview.dto.MyInterviewResponse;
 import com.group3.rms.interview.entity.Interview;
@@ -25,4 +26,9 @@ public interface InterviewMapper {
     @Mapping(target = "evaluationVisible", source = "evaluationVisible")
     @Mapping(target = "canEvaluate", source = "canEvaluate")
     InterviewRoundResponse toRound(Interview interview, boolean evaluationVisible, boolean canEvaluate);
+
+    @Mapping(target = "applicationId", source = "application.id")
+    @Mapping(target = "candidateName", source = "application.candidate.fullName")
+    @Mapping(target = "jobTitle", source = "application.job.title")
+    InterviewEvaluationResponse toEvaluation(Interview interview);
 }

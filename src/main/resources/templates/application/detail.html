@@ -214,7 +214,13 @@
                                   class="text-muted fst-italic">Đánh giá của người phỏng vấn khác</span>
                             <span th:if="${round.status.name() == 'SCHEDULED'}" class="text-muted">—</span>
                         </td>
-                        <td class="text-end text-nowrap"></td>
+                        <td class="text-end text-nowrap">
+                            <a th:if="${round.canEvaluate}"
+                               th:href="@{/interviews/{id}/evaluation(id=${round.id})}"
+                               class="btn btn-sm btn-warning">
+                                <i class="bi bi-star me-1"></i>Đánh giá
+                            </a>
+                        </td>
                     </tr>
                     </tbody>
                 </table>

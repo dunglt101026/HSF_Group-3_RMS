@@ -12,6 +12,8 @@ import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.interview.dto.InterviewCreateRequest;
+import com.group3.rms.interview.dto.InterviewEvaluationRequest;
+import com.group3.rms.interview.dto.InterviewEvaluationResponse;
 import com.group3.rms.interview.dto.InterviewScheduleFormResponse;
 import com.group3.rms.interview.dto.InterviewScheduledResponse;
 import com.group3.rms.interview.dto.MyInterviewResponse;
@@ -146,6 +148,68 @@ public class InterviewServiceImpl implements InterviewService {
                         userId, InterviewStatus.SCHEDULED, now),
                 interviewRepository.countByInterviewerIdAndStatus(userId, InterviewStatus.EVALUATED)
         );
+    }
+
+    // UC-25: Xem form / kết quả đánh giá.
+    @Override
+    public InterviewEvaluationResponse getEvaluation(Long interviewId) {
+        CurrentUser user = currentUserService.require();
+        Interview interview = interviewRepository.findForEvaluationById(interviewId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy buổi phỏng vấn."));
+        checkAssigned(interview, user);
+
+        // Đã đánh giá → vẫn mở được để xem ở chế độ chỉ đọc.
+        if (interview.getStatus() != InterviewStatus.EVALUATED) {
+            checkEvaluable(interview);
+        }
+        return interviewMapper.toEvaluation(interview);
+    }
+
+    // UC-25: Gửi đánh giá phỏng vấn.
+    @Override
+    @Transactional
+    public void submitEvaluation(Long interviewId, InterviewEvaluationRequest request) {
+        CurrentUser user = currentUserService.require();
+        Interview interview = interviewRepository.findByIdForUpdate(interviewId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy buổi phỏng vấn."));
+        checkAssigned(interview, user);
+
+        if (interview.getStatus() == InterviewStatus.EVALUATED) {
+            throw new BusinessException("Buổi phỏng vấn này đã được đánh giá, không thể sửa.");
+        }
+        checkEvaluable(interview);
+
+        interview.setRating(request.rating());
+        interview.setFeedback(request.feedback().trim());
+        interview.setEvaluatedAt(LocalDateTime.now());
+        interview.setStatus(InterviewStatus.EVALUATED);
+        interviewRepository.save(interview);
+
+        auditLogService.log(
+                AuditAction.SUBMIT_EVALUATION,
+                TargetType.INTERVIEW,
+                interview.getId(),
+                "Hồ sơ #" + interview.getApplication().getId() + " vòng " + interview.getRoundNo()
+                        + ": " + request.rating() + "/5"
+        );
+        log.info("{} gửi đánh giá buổi phỏng vấn #{}", user.username(), interview.getId());
+    }
+
+    /** Chỉ người được giao mới xem / gửi đánh giá. */
+    private void checkAssigned(Interview interview, CurrentUser user) {
+        if (!InterviewRules.isAssignedTo(interview, user.id())) {
+            throw new ForbiddenException("Bạn không được giao buổi phỏng vấn này.");
+        }
+    }
+
+    /** Buổi chưa đánh giá: hồ sơ còn INTERVIEW và đã tới giờ hẹn. */
+    private void checkEvaluable(Interview interview) {
+        if (interview.getApplication().getStatus() != ApplicationStatus.INTERVIEW) {
+            throw new BusinessException("Hồ sơ không còn trong quá trình phỏng vấn.");
+        }
+        if (interview.getScheduledAt().isAfter(LocalDateTime.now())) {
+            throw new BusinessException("Chưa tới giờ phỏng vấn.");
+        }
     }
 
     /** Chỉ HR phụ trách tin, và chỉ khi hồ sơ đang INTERVIEW. */

@@ -6,8 +6,10 @@ import com.group3.rms.interview.entity.InterviewStatus;
 import com.group3.rms.user.entity.RoleCode;
 import com.group3.rms.user.entity.User;
 import com.group3.rms.user.entity.UserStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -74,4 +76,15 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     Optional<User> findAssignableInterviewer(@Param("id") Long id,
                                              @Param("status") UserStatus status,
                                              @Param("roles") Collection<RoleCode> roles);
+
+    // ===== UC-25: đánh giá phỏng vấn =====
+
+    /** Màn đánh giá: tải sẵn hồ sơ, tin, ứng viên và người phỏng vấn. */
+    @EntityGraph(attributePaths = {"application", "application.job", "application.candidate", "interviewer"})
+    Optional<Interview> findForEvaluationById(Long id);
+
+    /** Khóa buổi phỏng vấn khi gửi đánh giá, tránh gửi hai lần đồng thời. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select i from Interview i where i.id = :id")
+    Optional<Interview> findByIdForUpdate(@Param("id") Long id);
 }

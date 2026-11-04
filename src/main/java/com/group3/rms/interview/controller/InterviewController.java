@@ -2,6 +2,7 @@ package com.group3.rms.interview.controller;
 
 import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.interview.dto.InterviewCreateRequest;
+import com.group3.rms.interview.dto.InterviewEvaluationRequest;
 import com.group3.rms.interview.dto.InterviewScheduledResponse;
 import com.group3.rms.interview.dto.MyInterviewTab;
 import com.group3.rms.interview.service.InterviewService;
@@ -66,5 +67,44 @@ public class InterviewController {
     ) {
         model.addAttribute("schedule", interviewService.getMySchedule(tab));
         return "interview/my-schedule";
+    }
+
+    // SCR-20: Đánh giá phỏng vấn (UC-25).
+    @GetMapping("/interviews/{id}/evaluation")
+    public String evaluationForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        try {
+            model.addAttribute("evaluation", interviewService.getEvaluation(id));
+        } catch (BusinessException e) {
+            // Chưa tới giờ / hồ sơ đã kết thúc → quay về lịch kèm lý do.
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/interviews/my";
+        }
+        if (!model.containsAttribute("form")) {
+            model.addAttribute("form", InterviewEvaluationRequest.empty());
+        }
+        return "interview/evaluation";
+    }
+
+    @PostMapping("/interviews/{id}/evaluation")
+    public String submitEvaluation(
+            @PathVariable Long id,
+            @Valid @ModelAttribute("form") InterviewEvaluationRequest form,
+            BindingResult bindingResult,
+            Model model,
+            RedirectAttributes ra
+    ) {
+        try {
+            if (bindingResult.hasErrors()) {
+                model.addAttribute("evaluation", interviewService.getEvaluation(id));
+                return "interview/evaluation";
+            }
+            interviewService.submitEvaluation(id, form);
+        } catch (BusinessException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/interviews/my";
+        }
+
+        ra.addFlashAttribute("success", "Đã gửi đánh giá.");
+        return "redirect:/interviews/my?tab=EVALUATED";
     }
 }

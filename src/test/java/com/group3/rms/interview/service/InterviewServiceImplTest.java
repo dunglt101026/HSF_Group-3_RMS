@@ -11,6 +11,8 @@ import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.interview.dto.InterviewCreateRequest;
+import com.group3.rms.interview.dto.InterviewEvaluationRequest;
+import com.group3.rms.interview.dto.InterviewEvaluationResponse;
 import com.group3.rms.interview.dto.InterviewScheduleFormResponse;
 import com.group3.rms.interview.dto.InterviewScheduledResponse;
 import com.group3.rms.interview.dto.InterviewerOptionResponse;
@@ -240,6 +242,110 @@ class InterviewServiceImplTest {
             assertThat(result.interviewerName()).isEqualTo("Phỏng Vấn Viên");
             verify(auditLogService).log(eq(AuditAction.SCHEDULE_INTERVIEW), eq(TargetType.INTERVIEW), any(),
                     anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("UC-25: Gửi đánh giá phỏng vấn")
+    class SubmitEvaluation {
+
+        final InterviewEvaluationRequest request = new InterviewEvaluationRequest(4, "  Kỹ năng tốt  ");
+        final LocalDateTime past = LocalDateTime.now().minusHours(1);
+
+        @BeforeEach
+        void loginAsInterviewer() {
+            when(currentUserService.require()).thenReturn(currentUser(INTERVIEWER_ID, RoleCode.INTERVIEWER));
+        }
+
+        @Test
+        @DisplayName("Đã tới giờ, hồ sơ còn INTERVIEW → lưu đánh giá, chuyển EVALUATED, ghi nhật ký")
+        void submitSuccess() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.INTERVIEW), INTERVIEWER_ID, 2,
+                    past, InterviewStatus.SCHEDULED);
+            when(interviewRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(interview));
+
+            service.submitEvaluation(11L, request);
+
+            assertThat(interview.getStatus()).isEqualTo(InterviewStatus.EVALUATED);
+            assertThat(interview.getRating()).isEqualTo(4);
+            assertThat(interview.getFeedback()).isEqualTo("Kỹ năng tốt");
+            assertThat(interview.getEvaluatedAt()).isNotNull();
+            verify(auditLogService).log(AuditAction.SUBMIT_EVALUATION, TargetType.INTERVIEW, 11L,
+                    "Hồ sơ #1 vòng 2: 4/5");
+        }
+
+        @Test
+        @DisplayName("Không được giao → 403")
+        void notAssignedForbidden() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.INTERVIEW),
+                    INTERVIEWER_OTHER_ID, 1, past, InterviewStatus.SCHEDULED);
+            when(interviewRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(interview));
+
+            assertThatThrownBy(() -> service.submitEvaluation(11L, request))
+                    .isInstanceOf(ForbiddenException.class);
+        }
+
+        @Test
+        @DisplayName("Chưa tới giờ phỏng vấn → lỗi")
+        void beforeScheduledTime() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.INTERVIEW), INTERVIEWER_ID, 1,
+                    LocalDateTime.now().plusHours(2), InterviewStatus.SCHEDULED);
+            when(interviewRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(interview));
+
+            assertThatThrownBy(() -> service.submitEvaluation(11L, request))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage("Chưa tới giờ phỏng vấn.");
+            assertThat(interview.getStatus()).isEqualTo(InterviewStatus.SCHEDULED);
+        }
+
+        @Test
+        @DisplayName("Hồ sơ đã rút → không nhận đánh giá")
+        void withdrawnApplication() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.WITHDRAWN), INTERVIEWER_ID, 1,
+                    past, InterviewStatus.SCHEDULED);
+            when(interviewRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(interview));
+
+            assertThatThrownBy(() -> service.submitEvaluation(11L, request))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage("Hồ sơ không còn trong quá trình phỏng vấn.");
+        }
+
+        @Test
+        @DisplayName("Đã đánh giá → không sửa được")
+        void alreadyEvaluated() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.INTERVIEW), INTERVIEWER_ID, 1,
+                    past, InterviewStatus.EVALUATED);
+            when(interviewRepository.findByIdForUpdate(11L)).thenReturn(Optional.of(interview));
+
+            assertThatThrownBy(() -> service.submitEvaluation(11L, request))
+                    .isInstanceOf(BusinessException.class);
+            assertThat(interview.getRating()).isEqualTo(4);
+            assertThat(interview.getFeedback()).isEqualTo("Ứng viên tốt");
+            verify(interviewRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Mở lại buổi đã đánh giá → xem chỉ đọc, kể cả khi hồ sơ đã kết thúc")
+        void viewEvaluatedReadOnly() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.HIRED), INTERVIEWER_ID, 1,
+                    past, InterviewStatus.EVALUATED);
+            when(interviewRepository.findForEvaluationById(11L)).thenReturn(Optional.of(interview));
+
+            InterviewEvaluationResponse response = service.getEvaluation(11L);
+
+            assertThat(response.evaluated()).isTrue();
+            assertThat(response.rating()).isEqualTo(4);
+            assertThat(response.candidateName()).isEqualTo("Nguyễn Văn An");
+        }
+
+        @Test
+        @DisplayName("Mở form khi chưa tới giờ → lỗi")
+        void openFormBeforeTime() {
+            Interview interview = interview(11L, application(1L, ApplicationStatus.INTERVIEW), INTERVIEWER_ID, 1,
+                    LocalDateTime.now().plusDays(1), InterviewStatus.SCHEDULED);
+            when(interviewRepository.findForEvaluationById(11L)).thenReturn(Optional.of(interview));
+
+            assertThatThrownBy(() -> service.getEvaluation(11L)).isInstanceOf(BusinessException.class);
         }
     }
 }

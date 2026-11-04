@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/staff}">
+
+<head>
+    <title>Đánh giá phỏng vấn</title>
+    <th:block layout:fragment="styles">
+        <style>
+            /* Chọn sao: radio ẩn, nhãn là ngôi sao; hiển thị ngược để tô sáng các sao bên trái sao được chọn */
+            .star-rating {
+                display: inline-flex;
+                flex-direction: row-reverse;
+                gap: .25rem;
+            }
+
+            .star-rating input {
+                position: absolute;
+                opacity: 0;
+            }
+
+            .star-rating label {
+                font-size: 2rem;
+                line-height: 1;
+                color: #d1d5db;
+                cursor: pointer;
+                font-weight: 400;
+            }
+
+            .star-rating input:checked ~ label,
+            .star-rating label:hover,
+            .star-rating label:hover ~ label {
+                color: #f59e0b;
+            }
+
+            .star-rating input:focus-visible + label {
+                outline: 2px solid #0d6efd;
+                border-radius: 4px;
+            }
+
+            .rating-stars {
+                color: #f59e0b;
+                font-size: 1.5rem;
+                letter-spacing: 2px;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8 col-xl-7">
+
+            <a th:href="@{/interviews/my}" class="text-decoration-none">
+                <i class="bi bi-arrow-left me-1"></i>Lịch phỏng vấn của tôi
+            </a>
+
+            <h1 class="h3 page-heading mt-3 mb-4">
+                <i class="bi bi-star me-2"></i>Đánh giá phỏng vấn
+            </h1>
+
+            <!-- Thông tin buổi phỏng vấn (chỉ đọc) -->
+            <div class="card mb-4">
+                <div class="card-body p-4">
+                    <dl class="row gy-2 mb-0">
+                        <dt class="col-sm-4">Ứng viên</dt>
+                        <dd class="col-sm-8 mb-0">
+                            <span th:text="${evaluation.candidateName}">Ứng viên</span>
+                            <a th:href="@{/applications/{id}(id=${evaluation.applicationId})}"
+                               class="small ms-2">Mở hồ sơ</a>
+                        </dd>
+
+                        <dt class="col-sm-4">Vị trí</dt>
+                        <dd class="col-sm-8 mb-0" th:text="${evaluation.jobTitle}">Vị trí</dd>
+
+                        <dt class="col-sm-4">Vòng</dt>
+                        <dd class="col-sm-8 mb-0" th:text="${evaluation.roundNo}">1</dd>
+
+                        <dt class="col-sm-4">Thời gian</dt>
+                        <dd class="col-sm-8 mb-0"
+                            th:text="${#temporals.format(evaluation.scheduledAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</dd>
+
+                        <dt class="col-sm-4">Địa điểm</dt>
+                        <dd class="col-sm-8 mb-0 text-break" th:text="${evaluation.location}">Phòng họp</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Đã đánh giá → chỉ đọc -->
+            <div th:if="${evaluation.evaluated()}" class="card">
+                <div class="card-body p-4">
+                    <div class="alert alert-success">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Bạn đã gửi đánh giá lúc
+                        <strong th:text="${#temporals.format(evaluation.evaluatedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</strong>.
+                    </div>
+
+                    <h2 class="h6 fw-bold">Điểm</h2>
+                    <p class="rating-stars mb-3"
+                       th:title="${evaluation.rating} + '/5'"
+                       th:text="${#strings.repeat('★', evaluation.rating) + #strings.repeat('☆', 5 - evaluation.rating)}">★★★★☆</p>
+
+                    <h2 class="h6 fw-bold">Nhận xét</h2>
+                    <p class="mb-0" style="white-space: pre-line" th:text="${evaluation.feedback}">Nhận xét</p>
+                </div>
+            </div>
+
+            <!-- Chưa đánh giá → form -->
+            <div th:unless="${evaluation.evaluated()}" class="card">
+                <div class="card-body p-4">
+                    <form th:action="@{/interviews/{id}/evaluation(id=${evaluation.id})}"
+                          th:object="${form}" method="post" novalidate
+                          onsubmit="return confirm('Gửi đánh giá? Gửi xong sẽ không thể sửa.')">
+
+                        <div class="mb-3">
+                            <span class="form-label d-block required" id="ratingLabel">Điểm đánh giá</span>
+                            <div class="star-rating" role="radiogroup" aria-labelledby="ratingLabel">
+                                <th:block th:each="star : ${#numbers.sequence(5, 1)}">
+                                    <input type="radio" name="rating" th:id="'rating' + ${star}"
+                                           th:value="${star}" th:checked="${form.rating == star}">
+                                    <label th:for="'rating' + ${star}" th:title="${star} + '/5'"
+                                           th:attr="aria-label=${star} + ' sao'">★</label>
+                                </th:block>
+                            </div>
+                            <div class="text-danger small mt-1" th:if="${#fields.hasErrors('rating')}"
+                                 th:errors="*{rating}">Lỗi</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="feedback" class="form-label required">Nhận xét</label>
+                            <textarea id="feedback" th:field="*{feedback}" rows="6" maxlength="4000"
+                                      class="form-control"
+                                      th:classappend="${#fields.hasErrors('feedback')} ? 'is-invalid'"
+                                      placeholder="Kiến thức chuyên môn, kỹ năng, thái độ, đề xuất…"></textarea>
+                            <div class="invalid-feedback" th:errors="*{feedback}">Lỗi</div>
+                        </div>
+
+                        <div class="alert alert-warning py-2">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Gửi xong sẽ không thể sửa.
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Gửi đánh giá
+                            </button>
+                            <a th:href="@{/interviews/my}" class="btn btn-outline-secondary"
+                               onclick="if (history.length > 1) { history.back(); return false; }">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>
