@@ -4,12 +4,14 @@ import com.group3.rms.common.security.RmsUserDetails;
 import com.group3.rms.common.security.RmsUserDetailsService;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.user.entity.RoleCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -21,6 +23,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 /**
  * Cấu hình Spring Security cho Sprint 3.
@@ -53,6 +58,10 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/register").permitAll()
                 // Dev only
                 .requestMatchers("/demo/**").permitAll()
+                // Việc làm công khai (UC-16, UC-17)
+                .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/*").permitAll()
+                // Chỉ Candidate: nộp hồ sơ, hồ sơ của tôi (UC-18, UC-19, UC-20)
+                .requestMatchers("/jobs/*/apply", "/my/**").hasRole("CANDIDATE")
                 // Admin only
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // HR only
@@ -113,6 +122,15 @@ public class SecurityConfig {
             currentUserService.set(currentUser);
 
             log.info("Người dùng '{}' đăng nhập thành công với vai trò {}", currentUser.username(), currentUser.role());
+
+            // UC-01: Candidate quay lại trang đang xem dở nếu có; nhân viên luôn về trang theo vai trò.
+            RequestCache requestCache = new HttpSessionRequestCache();
+            SavedRequest savedRequest = requestCache.getRequest(request, response);
+            if (currentUser.role() == RoleCode.CANDIDATE && savedRequest != null) {
+                response.sendRedirect(savedRequest.getRedirectUrl());
+                return;
+            }
+            requestCache.removeRequest(request, response);
 
             String redirectUrl = switch (currentUser.role()) {
                 case ADMIN     -> "/admin/users";

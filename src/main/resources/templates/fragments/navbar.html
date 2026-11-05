@@ -21,6 +21,11 @@
                     <a class="nav-link" th:href="@{/demo}">Kiểm tra hệ thống</a>
                 </li>
 
+                <!-- Guest xem việc làm công khai (UC-16) -->
+                <li class="nav-item" th:if="${currentUser == null}">
+                    <a class="nav-link" th:href="@{/jobs}">Việc làm</a>
+                </li>
+
                 <!-- Menu dành cho người dùng đã đăng nhập theo vai trò -->
                 <th:block th:if="${currentUser != null}">
                     <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
