@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -53,6 +54,8 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/register").permitAll()
                 // Dev only
                 .requestMatchers("/demo/**").permitAll()
+                // Việc làm công khai (UC-16)
+                .requestMatchers(HttpMethod.GET, "/jobs").permitAll()
                 // Admin only
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // HR only

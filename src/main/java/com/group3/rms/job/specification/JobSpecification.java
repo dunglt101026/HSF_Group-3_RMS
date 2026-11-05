@@ -36,4 +36,34 @@ public final class JobSpecification {
                         "%" + keyword.trim().toLowerCase() + "%"
                 );
     }
+
+    // UC-16: tìm từ khóa trong tiêu đề, không phân biệt hoa thường.
+    // Cột description là NVARCHAR(MAX), Hibernate không cho dùng lower() nên không tìm trong mô tả.
+    public static Specification<Job> titleMatchesKeyword(String keyword) {
+        String pattern = likePattern(keyword);
+        return (root, query, cb) ->
+                cb.like(cb.lower(root.get("title")), pattern, '!');
+    }
+
+    // UC-16: lọc theo phòng ban.
+    public static Specification<Job> hasDepartment(Long departmentId) {
+        return (root, query, cb) ->
+                cb.equal(root.get("department").get("id"), departmentId);
+    }
+
+    // UC-16: lọc theo địa điểm.
+    public static Specification<Job> hasLocation(String location) {
+        return (root, query, cb) ->
+                cb.equal(root.get("location"), location);
+    }
+
+    // Để người dùng tìm được đúng các ký tự đặc biệt của LIKE trên SQL Server: % _ [
+    private static String likePattern(String keyword) {
+        String escaped = keyword.trim().toLowerCase()
+                .replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_")
+                .replace("[", "![");
+        return "%" + escaped + "%";
+    }
 }
