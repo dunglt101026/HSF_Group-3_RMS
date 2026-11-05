@@ -1,15 +1,20 @@
 package com.group3.rms.job.mapper;
 
+import com.group3.rms.job.dto.ApplyState;
 import com.group3.rms.job.dto.DepartmentOptionResponse;
+import com.group3.rms.job.dto.PublicJobDetailResponse;
 import com.group3.rms.job.dto.PublicJobSummaryResponse;
 import com.group3.rms.job.entity.Department;
 import com.group3.rms.job.entity.Job;
+import com.group3.rms.job.entity.Skill;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Mapper(componentModel = "spring")
 public interface PublicJobMapper {
@@ -18,7 +23,19 @@ public interface PublicJobMapper {
     @Mapping(target = "salaryText", expression = "java(salaryText(job.getSalaryMin(), job.getSalaryMax()))")
     PublicJobSummaryResponse toSummary(Job job);
 
+    @Mapping(target = "id", source = "job.id")
+    @Mapping(target = "departmentName", source = "job.department.name")
+    @Mapping(target = "salaryText", expression = "java(salaryText(job.getSalaryMin(), job.getSalaryMax()))")
+    @Mapping(target = "skills", source = "job.skills")
+    @Mapping(target = "applyState", source = "applyState")
+    PublicJobDetailResponse toDetail(Job job, ApplyState applyState);
+
     DepartmentOptionResponse toDepartmentOption(Department department);
+
+    /** Tên kỹ năng theo thứ tự chữ cái. */
+    default List<String> skillNames(Set<Skill> skills) {
+        return skills.stream().map(Skill::getName).sorted().toList();
+    }
 
     /** Ví dụ: "15.000.000 – 30.000.000 VNĐ", "Từ 8.000.000 VNĐ", "Thỏa thuận". */
     default String salaryText(BigDecimal min, BigDecimal max) {
