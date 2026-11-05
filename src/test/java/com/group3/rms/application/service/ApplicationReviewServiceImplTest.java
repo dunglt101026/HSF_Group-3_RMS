@@ -1,6 +1,7 @@
 package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationDetailResponse;
+import com.group3.rms.application.dto.CvFileResponse;
 import com.group3.rms.application.entity.Application;
 import com.group3.rms.application.entity.ApplicationStatus;
 import com.group3.rms.application.mapper.ApplicationMapperImpl;
@@ -12,6 +13,7 @@ import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.common.storage.FileStorageService;
 import com.group3.rms.interview.entity.Interview;
 import com.group3.rms.interview.entity.InterviewStatus;
 import com.group3.rms.interview.mapper.InterviewMapperImpl;
@@ -24,6 +26,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,6 +58,9 @@ class ApplicationReviewServiceImplTest {
     @Mock
     AuditLogService auditLogService;
 
+    @Mock
+    FileStorageService fileStorageService;
+
     ApplicationReviewServiceImpl service;
 
     @BeforeEach
@@ -64,8 +71,80 @@ class ApplicationReviewServiceImplTest {
                 new ApplicationMapperImpl(),
                 new InterviewMapperImpl(),
                 currentUserService,
-                auditLogService
+                auditLogService,
+                fileStorageService
         );
+    }
+
+    @Nested
+    @DisplayName("UC-21: Tải CV")
+    class DownloadCv {
+
+        Application application;
+        Resource file;
+
+        @BeforeEach
+        void setUp() {
+            application = application(1L, ApplicationStatus.INTERVIEW);
+            application.setCvPath("abc.pdf");
+            application.setCvOriginalName("NguyenVanAn_CV.pdf");
+            file = new ByteArrayResource(new byte[]{1});
+        }
+
+        @Test
+        @DisplayName("HR tải được CV với tên file gốc")
+        void hrDownloads() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OTHER_ID, RoleCode.HR));
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(application));
+            when(fileStorageService.load("abc.pdf")).thenReturn(file);
+
+            CvFileResponse cv = service.downloadCv(1L);
+
+            assertThat(cv.file()).isSameAs(file);
+            assertThat(cv.fileName()).isEqualTo("NguyenVanAn_CV.pdf");
+        }
+
+        @Test
+        @DisplayName("Người phỏng vấn được giao hồ sơ tải được CV")
+        void assignedInterviewerDownloads() {
+            when(currentUserService.require()).thenReturn(currentUser(INTERVIEWER_ID, RoleCode.INTERVIEWER));
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(application));
+            when(interviewRepository.findWithInterviewerByApplicationIdOrderByRoundNoAsc(1L)).thenReturn(List.of(
+                    interview(11L, application, INTERVIEWER_ID, 1, LocalDateTime.now(), InterviewStatus.SCHEDULED)));
+            when(fileStorageService.load("abc.pdf")).thenReturn(file);
+
+            assertThat(service.downloadCv(1L).file()).isSameAs(file);
+        }
+
+        @Test
+        @DisplayName("Người phỏng vấn không được giao hồ sơ → ForbiddenException")
+        void otherInterviewerForbidden() {
+            when(currentUserService.require()).thenReturn(currentUser(INTERVIEWER_OTHER_ID, RoleCode.INTERVIEWER));
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(application));
+            when(interviewRepository.findWithInterviewerByApplicationIdOrderByRoundNoAsc(1L)).thenReturn(List.of(
+                    interview(11L, application, INTERVIEWER_ID, 1, LocalDateTime.now(), InterviewStatus.SCHEDULED)));
+
+            assertThatThrownBy(() -> service.downloadCv(1L)).isInstanceOf(ForbiddenException.class);
+            verify(fileStorageService, never()).load(anyString());
+        }
+
+        @Test
+        @DisplayName("Candidate không tải được CV qua màn hình xử lý hồ sơ")
+        void candidateForbidden() {
+            when(currentUserService.require()).thenReturn(currentUser(CANDIDATE_ID, RoleCode.CANDIDATE));
+
+            assertThatThrownBy(() -> service.downloadCv(1L)).isInstanceOf(ForbiddenException.class);
+            verify(fileStorageService, never()).load(anyString());
+        }
+
+        @Test
+        @DisplayName("Không tìm thấy hồ sơ → NotFoundException")
+        void notFound() {
+            when(currentUserService.require()).thenReturn(currentUser(HR_OWNER_ID, RoleCode.HR));
+            when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.downloadCv(99L)).isInstanceOf(NotFoundException.class);
+        }
     }
 
     @Nested
