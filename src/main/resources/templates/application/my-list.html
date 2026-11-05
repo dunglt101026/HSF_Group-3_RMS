@@ -74,6 +74,7 @@
                             <th>Ngày nộp</th>
                             <th>Trạng thái</th>
                             <th>Lịch phỏng vấn sắp tới</th>
+                            <th class="text-end">Thao tác</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -98,6 +99,15 @@
                                     <span th:text="${#temporals.format(interview.scheduledAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</span>
                                     <span class="text-muted text-break" th:text="'· ' + ${interview.location}">· Phòng họp</span>
                                 </div>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <form th:if="${app.canWithdraw()}"
+                                      th:action="@{/my/applications/{id}/withdraw(id=${app.id})}" method="post"
+                                      onsubmit="return confirm('Rút hồ sơ sẽ không thể nộp lại cho vị trí này. Bạn có chắc muốn rút?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-x-circle me-1"></i>Rút hồ sơ
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         </tbody>

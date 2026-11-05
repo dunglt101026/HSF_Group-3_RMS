@@ -48,6 +48,8 @@ import static com.group3.rms.interview.InterviewTestData.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -130,7 +132,7 @@ class CandidateApplicationServiceImplTest {
             loginAsCandidate();
             candidate.setStatus(UserStatus.INACTIVE);
 
-            assertThatThrownBy(() -> service.getMyApplications(null)).isInstanceOf(ForbiddenException.class);
+            assertThatThrownBy(() -> service.withdraw(1L)).isInstanceOf(ForbiddenException.class);
         }
     }
 
@@ -316,6 +318,71 @@ class CandidateApplicationServiceImplTest {
             assertThat(result.applications()).singleElement()
                     .satisfies(row -> assertThat(row.id()).isEqualTo(2L));
             assertThat(result.totalCount()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("Chỉ hiện nút rút khi APPLIED hoặc INTERVIEW")
+        void canWithdrawFlag() {
+            applicationsInDb();
+
+            MyApplicationListResponse result = service.getMyApplications(null);
+
+            assertThat(result.applications().get(0).canWithdraw()).isTrue();
+            assertThat(result.applications().get(1).canWithdraw()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("UC-20: Rút hồ sơ")
+    class Withdraw {
+
+        @BeforeEach
+        void login() {
+            loginAsCandidate();
+        }
+
+        @Test
+        @DisplayName("Đang INTERVIEW → WITHDRAWN, ghi thời điểm và nhật ký WITHDRAW")
+        void withdrawSuccess() {
+            Application app = application(1L, ApplicationStatus.INTERVIEW);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(app));
+
+            service.withdraw(1L);
+
+            assertThat(app.getStatus()).isEqualTo(ApplicationStatus.WITHDRAWN);
+            assertThat(app.getStatusChangedAt()).isNotNull();
+            verify(auditLogService).log(AuditAction.WITHDRAW, TargetType.APPLICATION, 1L,
+                    "Hồ sơ #1: INTERVIEW → WITHDRAWN");
+        }
+
+        @Test
+        @DisplayName("Hồ sơ không tồn tại → 404")
+        void notFound() {
+            when(applicationRepository.findByIdForUpdate(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.withdraw(99L)).isInstanceOf(NotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("Hồ sơ của người khác → 403, không đổi trạng thái")
+        void notOwner() {
+            Application app = application(1L, ApplicationStatus.APPLIED);
+            app.setCandidate(user(OTHER_CANDIDATE_ID, "Người khác"));
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(app));
+
+            assertThatThrownBy(() -> service.withdraw(1L)).isInstanceOf(ForbiddenException.class);
+            assertThat(app.getStatus()).isEqualTo(ApplicationStatus.APPLIED);
+        }
+
+        @Test
+        @DisplayName("Trạng thái kết thúc → không rút được, không ghi nhật ký")
+        void finishedStatus() {
+            Application app = application(1L, ApplicationStatus.HIRED);
+            when(applicationRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(app));
+
+            assertThatThrownBy(() -> service.withdraw(1L)).isInstanceOf(BusinessException.class);
+            assertThat(app.getStatus()).isEqualTo(ApplicationStatus.HIRED);
+            verify(auditLogService, never()).log(any(), any(), anyLong(), anyString());
         }
     }
 }
