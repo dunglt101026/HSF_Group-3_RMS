@@ -2,6 +2,9 @@ package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationCreateRequest;
 import com.group3.rms.application.dto.ApplyFormResponse;
+import com.group3.rms.application.dto.MyApplicationListResponse;
+import com.group3.rms.application.dto.MyApplicationResponse;
+import com.group3.rms.application.dto.UpcomingInterviewResponse;
 import com.group3.rms.application.entity.Application;
 import com.group3.rms.application.entity.ApplicationStatus;
 import com.group3.rms.application.mapper.MyApplicationMapper;
@@ -15,6 +18,7 @@ import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.common.storage.FileStorageService;
+import com.group3.rms.interview.entity.InterviewStatus;
 import com.group3.rms.job.entity.Job;
 import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.job.repository.JobRepository;
@@ -31,6 +35,10 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -90,6 +98,32 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
             fileStorageService.delete(cvPath);
             throw e;
         }
+    }
+
+    // UC-19: Xem hồ sơ ứng tuyển của tôi.
+    @Override
+    public MyApplicationListResponse getMyApplications(ApplicationStatus status) {
+        User candidate = requireActiveCandidate();
+
+        List<Application> all = applicationRepository.findByCandidateIdOrderByCreatedAtDescIdDesc(candidate.getId());
+        Map<Long, List<UpcomingInterviewResponse>> interviewsByApplication = applicationRepository
+                .findUpcomingInterviews(candidate.getId(), ApplicationStatus.INTERVIEW,
+                        InterviewStatus.SCHEDULED, LocalDateTime.now())
+                .stream()
+                .collect(Collectors.groupingBy(UpcomingInterviewResponse::applicationId));
+
+        Map<ApplicationStatus, Long> statusCounts = new EnumMap<>(ApplicationStatus.class);
+        for (ApplicationStatus item : ApplicationStatus.values()) {
+            statusCounts.put(item, all.stream().filter(app -> app.getStatus() == item).count());
+        }
+
+        List<MyApplicationResponse> rows = all.stream()
+                .filter(app -> status == null || app.getStatus() == status)
+                .map(app -> myApplicationMapper.toResponse(
+                        app, interviewsByApplication.getOrDefault(app.getId(), List.of())))
+                .toList();
+
+        return new MyApplicationListResponse(status, rows, all.size(), statusCounts);
     }
 
     /** Kiểm tra bằng dữ liệu hiện tại, để tài khoản vừa bị khóa không thao tác tiếp bằng phiên cũ. */
