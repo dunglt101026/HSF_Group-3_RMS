@@ -126,6 +126,33 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         return new MyApplicationListResponse(status, rows, all.size(), statusCounts);
     }
 
+    // UC-20: Rút hồ sơ.
+    @Override
+    @Transactional
+    public void withdraw(Long applicationId) {
+        User candidate = requireActiveCandidate();
+        // Khóa hồ sơ để không ghi đè thao tác đồng thời của HR (duyệt, loại, tuyển).
+        Application application = applicationRepository.findByIdForUpdate(applicationId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
+
+        if (!candidate.getId().equals(application.getCandidate().getId())) {
+            throw new ForbiddenException("Bạn không có quyền rút hồ sơ này.");
+        }
+
+        ApplicationStatus current = application.getStatus();
+        if (current != ApplicationStatus.APPLIED && current != ApplicationStatus.INTERVIEW) {
+            throw new BusinessException("Chỉ rút được hồ sơ đang chờ duyệt hoặc đang phỏng vấn.");
+        }
+
+        application.setStatus(ApplicationStatus.WITHDRAWN);
+        application.setStatusChangedAt(LocalDateTime.now());
+        applicationRepository.save(application);
+
+        auditLogService.log(AuditAction.WITHDRAW, TargetType.APPLICATION, application.getId(),
+                "Hồ sơ #" + application.getId() + ": " + current + " → WITHDRAWN");
+        log.info("{} rút hồ sơ #{}", candidate.getUsername(), application.getId());
+    }
+
     /** Kiểm tra bằng dữ liệu hiện tại, để tài khoản vừa bị khóa không thao tác tiếp bằng phiên cũ. */
     private User requireActiveCandidate() {
         CurrentUser current = currentUserService.require();
