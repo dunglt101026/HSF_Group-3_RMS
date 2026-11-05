@@ -119,11 +119,10 @@
                                 <i class="bi bi-file-earmark-text me-1"></i>
                                 <span th:text="${app.cvOriginalName}">CV.pdf</span>
                             </div>
-                            <!-- Tải CV cần FileStorageService (TV4) — sẽ bật ở PR sau -->
-                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled
-                                    title="Chức năng tải CV đang được hoàn thiện">
+                            <a class="btn btn-sm btn-outline-secondary"
+                               th:href="@{/applications/{id}/cv(id=${app.id})}">
                                 <i class="bi bi-download me-1"></i>Tải CV
-                            </button>
+                            </a>
                         </dd>
                     </dl>
                 </div>

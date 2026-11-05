@@ -2,6 +2,7 @@ package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationActions;
 import com.group3.rms.application.dto.ApplicationDetailResponse;
+import com.group3.rms.application.dto.CvFileResponse;
 import com.group3.rms.application.entity.Application;
 import com.group3.rms.application.entity.ApplicationStatus;
 import com.group3.rms.application.mapper.ApplicationMapper;
@@ -14,6 +15,7 @@ import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.common.storage.FileStorageService;
 import com.group3.rms.interview.dto.InterviewRoundResponse;
 import com.group3.rms.interview.entity.Interview;
 import com.group3.rms.interview.entity.InterviewStatus;
@@ -49,26 +51,20 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
     private final InterviewMapper interviewMapper;
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
+    private final FileStorageService fileStorageService;
 
     // UC-21: Xem chi tiết hồ sơ.
     @Override
     public ApplicationDetailResponse getDetail(Long applicationId) {
-        CurrentUser user = currentUserService.require();
-        if (user.role() != RoleCode.HR && user.role() != RoleCode.INTERVIEWER) {
-            throw new ForbiddenException("Bạn không có quyền xem hồ sơ này.");
-        }
+        CurrentUser user = requireReviewer();
 
         Application application = applicationRepository.findDetailById(applicationId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
         List<Interview> interviews =
                 interviewRepository.findWithInterviewerByApplicationIdOrderByRoundNoAsc(applicationId);
+        requireCanView(user, interviews);
 
         boolean hrViewer = user.role() == RoleCode.HR;
-        // Mọi HR xem được mọi hồ sơ; người phỏng vấn chỉ xem hồ sơ có buổi phỏng vấn của mình.
-        if (!hrViewer && interviews.stream().noneMatch(i -> InterviewRules.isAssignedTo(i, user.id()))) {
-            throw new ForbiddenException("Bạn không được giao phỏng vấn hồ sơ này.");
-        }
-
         LocalDateTime now = LocalDateTime.now();
         List<InterviewRoundResponse> rounds = interviews.stream()
                 .map(interview -> interviewMapper.toRound(
@@ -79,6 +75,18 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
                 .toList();
 
         return applicationMapper.toDetail(application, rounds, buildActions(application, user));
+    }
+
+    // UC-21: Tải CV.
+    @Override
+    public CvFileResponse downloadCv(Long applicationId) {
+        CurrentUser user = requireReviewer();
+
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
+        requireCanView(user, interviewRepository.findWithInterviewerByApplicationIdOrderByRoundNoAsc(applicationId));
+
+        return new CvFileResponse(fileStorageService.load(application.getCvPath()), application.getCvOriginalName());
     }
 
     // UC-22: Duyệt hồ sơ.
@@ -137,6 +145,22 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
                 "Hồ sơ #" + application.getId() + ": " + current + " → " + target
         );
         log.info("Hồ sơ #{} chuyển {} → {} bởi {}", application.getId(), current, target, user.username());
+    }
+
+    private CurrentUser requireReviewer() {
+        CurrentUser user = currentUserService.require();
+        if (user.role() != RoleCode.HR && user.role() != RoleCode.INTERVIEWER) {
+            throw new ForbiddenException("Bạn không có quyền xem hồ sơ này.");
+        }
+        return user;
+    }
+
+    /** Mọi HR xem được mọi hồ sơ; người phỏng vấn chỉ xem hồ sơ có buổi phỏng vấn của mình. */
+    private void requireCanView(CurrentUser user, List<Interview> interviews) {
+        if (user.role() != RoleCode.HR
+                && interviews.stream().noneMatch(i -> InterviewRules.isAssignedTo(i, user.id()))) {
+            throw new ForbiddenException("Bạn không được giao phỏng vấn hồ sơ này.");
+        }
     }
 
     private ApplicationActions buildActions(Application application, CurrentUser user) {
