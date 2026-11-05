@@ -60,6 +60,8 @@ public class SecurityConfig {
                 .requestMatchers("/demo/**").permitAll()
                 // Việc làm công khai (UC-16, UC-17)
                 .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/*").permitAll()
+                // Chỉ Candidate: nộp hồ sơ, hồ sơ của tôi (UC-18, UC-19, UC-20)
+                .requestMatchers("/jobs/*/apply", "/my/**").hasRole("CANDIDATE")
                 // Admin only
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // HR only
