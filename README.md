@@ -37,7 +37,7 @@ Hệ thống quản lý tuyển dụng nội bộ: HR đăng tin, nhận hồ s�
    mvnw.cmd spring-boot:run      # Windows CMD / PowerShell
    ```
 4. Chạy `database/seed.sql` trên `RMS_DB` để có dữ liệu mẫu (xem [docs/database.md](docs/database.md) mục 5).
-5. Chạy lại app, mở <http://localhost:8080/demo/db-check> để kiểm tra kết nối.
+5. Chạy lại app, mở <http://localhost:8080/jobs>; thấy danh sách việc làm là đã kết nối được database.
 
 Chạy test: `./mvnw verify` (cần SQL Server đang chạy).
 

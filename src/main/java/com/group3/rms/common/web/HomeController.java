@@ -4,7 +4,9 @@ import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /** Trang chủ "/": Guest và Candidate sang trang việc làm, nhân viên về trang theo vai trò. */
 @Controller
@@ -14,7 +16,13 @@ public class HomeController {
     private final CurrentUserService currentUserService;
 
     @GetMapping("/")
-    public String home() {
+    public String home(Model model, RedirectAttributes attributes) {
+        // GlobalExceptionHandler có thể đưa lỗi về "/", giữ thông báo qua lần chuyển hướng tiếp theo.
+        Object error = model.getAttribute("error");
+        if (error != null) {
+            attributes.addFlashAttribute("error", error);
+        }
+
         String target = currentUserService.get()
                 .map(CurrentUser::role)
                 .map(role -> switch (role) {
