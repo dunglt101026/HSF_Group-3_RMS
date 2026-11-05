@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+
+<head>
+    <title>Chi tiết việc làm</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <a th:href="@{/jobs}" class="text-decoration-none">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách việc làm
+    </a>
+
+    <div class="card mt-3 mb-4">
+        <div class="card-body p-4">
+            <h1 class="h3 page-heading mb-3" th:text="${job.title}">Tiêu đề</h1>
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-6 col-lg-3">
+                    <div class="text-muted small">Phòng ban</div>
+                    <div class="fw-semibold" th:text="${job.departmentName}">Phòng ban</div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="text-muted small">Địa điểm</div>
+                    <div class="fw-semibold"
+                         th:text="${job.location != null ? job.location : 'Chưa cập nhật'}">Địa điểm</div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="text-muted small">Mức lương</div>
+                    <div class="fw-semibold" th:text="${job.salaryText}">Mức lương</div>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <div class="text-muted small">Hạn nộp hồ sơ</div>
+                    <div class="fw-semibold" th:text="${#temporals.format(job.deadline, 'dd/MM/yyyy')}">01/01/2026</div>
+                </div>
+            </div>
+
+            <!-- Vùng hành động theo điều kiện của người xem (UC-17) -->
+            <div th:switch="${job.applyState.name()}">
+                <a th:case="'CAN_APPLY'" th:href="@{/jobs/{id}/apply(id=${job.id})}" class="btn btn-primary">
+                    <i class="bi bi-send me-1"></i>Ứng tuyển
+                </a>
+                <a th:case="'LOGIN_REQUIRED'" th:href="@{/jobs/{id}/login-to-apply(id=${job.id})}" class="btn btn-primary">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập để ứng tuyển
+                </a>
+                <div th:case="'ALREADY_APPLIED'" class="alert alert-info mb-0">
+                    <i class="bi bi-check-circle me-1"></i>Bạn đã ứng tuyển vị trí này.
+                </div>
+                <div th:case="'CLOSED'" class="alert alert-secondary mb-0">
+                    <i class="bi bi-lock me-1"></i>Vị trí này đã ngừng nhận hồ sơ.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-3">Mô tả công việc</h2>
+            <div class="text-break" style="white-space: pre-line" th:text="${job.description}">Mô tả</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <h2 class="h5 fw-bold mb-3">Kỹ năng yêu cầu</h2>
+            <span th:each="skill : ${job.skills}"
+                  class="badge text-bg-light border text-dark me-2 mb-2 p-2"
+                  th:text="${skill}">Kỹ năng</span>
+            <p th:if="${#lists.isEmpty(job.skills)}" class="text-muted mb-0">Chưa có kỹ năng được cập nhật.</p>
+        </div>
+    </div>
+
+</main>
+</body>
+</html>
