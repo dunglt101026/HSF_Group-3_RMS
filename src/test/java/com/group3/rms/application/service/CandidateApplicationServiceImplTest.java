@@ -2,6 +2,8 @@ package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationCreateRequest;
 import com.group3.rms.application.dto.ApplyFormResponse;
+import com.group3.rms.application.dto.MyApplicationListResponse;
+import com.group3.rms.application.dto.UpcomingInterviewResponse;
 import com.group3.rms.application.entity.Application;
 import com.group3.rms.application.entity.ApplicationStatus;
 import com.group3.rms.application.mapper.MyApplicationMapperImpl;
@@ -14,6 +16,7 @@ import com.group3.rms.common.exception.ForbiddenException;
 import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.common.storage.FileStorageService;
+import com.group3.rms.interview.entity.InterviewStatus;
 import com.group3.rms.job.entity.Job;
 import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.job.repository.JobRepository;
@@ -34,14 +37,18 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static com.group3.rms.interview.InterviewTestData.CANDIDATE_ID;
+import static com.group3.rms.interview.InterviewTestData.application;
 import static com.group3.rms.interview.InterviewTestData.currentUser;
 import static com.group3.rms.interview.InterviewTestData.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -114,7 +121,7 @@ class CandidateApplicationServiceImplTest {
         void notCandidate() {
             when(currentUserService.require()).thenReturn(currentUser(2L, RoleCode.HR));
 
-            assertThatThrownBy(() -> service.getApplyForm(JOB_ID)).isInstanceOf(ForbiddenException.class);
+            assertThatThrownBy(() -> service.getMyApplications(null)).isInstanceOf(ForbiddenException.class);
         }
 
         @Test
@@ -123,7 +130,7 @@ class CandidateApplicationServiceImplTest {
             loginAsCandidate();
             candidate.setStatus(UserStatus.INACTIVE);
 
-            assertThatThrownBy(() -> service.getApplyForm(JOB_ID)).isInstanceOf(ForbiddenException.class);
+            assertThatThrownBy(() -> service.getMyApplications(null)).isInstanceOf(ForbiddenException.class);
         }
     }
 
@@ -259,6 +266,56 @@ class CandidateApplicationServiceImplTest {
                     .isInstanceOf(BusinessException.class)
                     .extracting("field").isEqualTo("cvFile");
             verify(fileStorageService).delete("abc.pdf");
+        }
+    }
+
+    @Nested
+    @DisplayName("UC-19: Hồ sơ của tôi")
+    class MyApplications {
+
+        @BeforeEach
+        void login() {
+            loginAsCandidate();
+        }
+
+        private void applicationsInDb() {
+            when(applicationRepository.findByCandidateIdOrderByCreatedAtDescIdDesc(CANDIDATE_ID)).thenReturn(List.of(
+                    application(1L, ApplicationStatus.INTERVIEW),
+                    application(2L, ApplicationStatus.HIRED),
+                    application(3L, ApplicationStatus.INTERVIEW)));
+        }
+
+        @Test
+        @DisplayName("Tab Tất cả: đủ hồ sơ, đếm theo trạng thái, gắn lịch sắp tới đúng hồ sơ")
+        void allTab() {
+            applicationsInDb();
+            UpcomingInterviewResponse upcoming =
+                    new UpcomingInterviewResponse(1L, 2, LocalDateTime.now().plusDays(1), "Phòng họp 301");
+            when(applicationRepository.findUpcomingInterviews(eq(CANDIDATE_ID), eq(ApplicationStatus.INTERVIEW),
+                    eq(InterviewStatus.SCHEDULED), any())).thenReturn(List.of(upcoming));
+
+            MyApplicationListResponse result = service.getMyApplications(null);
+
+            assertThat(result.selectedStatus()).isNull();
+            assertThat(result.totalCount()).isEqualTo(3);
+            assertThat(result.statusCounts().get(ApplicationStatus.INTERVIEW)).isEqualTo(2);
+            assertThat(result.statusCounts().get(ApplicationStatus.WITHDRAWN)).isZero();
+            assertThat(result.applications()).hasSize(3);
+            assertThat(result.applications().get(0).upcomingInterviews()).containsExactly(upcoming);
+            assertThat(result.applications().get(1).upcomingInterviews()).isEmpty();
+            assertThat(result.applications().get(0).jobTitle()).isEqualTo("Lập trình viên Java");
+        }
+
+        @Test
+        @DisplayName("Lọc theo tab: chỉ còn hồ sơ của trạng thái đó, số đếm giữ nguyên")
+        void filterByStatus() {
+            applicationsInDb();
+
+            MyApplicationListResponse result = service.getMyApplications(ApplicationStatus.HIRED);
+
+            assertThat(result.applications()).singleElement()
+                    .satisfies(row -> assertThat(row.id()).isEqualTo(2L));
+            assertThat(result.totalCount()).isEqualTo(3);
         }
     }
 }
