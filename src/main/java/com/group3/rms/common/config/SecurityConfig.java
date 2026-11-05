@@ -56,8 +56,6 @@ public class SecurityConfig {
                 ).permitAll()
                 // Auth pages
                 .requestMatchers("/login", "/register").permitAll()
-                // Dev only
-                .requestMatchers("/demo/**").permitAll()
                 // Việc làm công khai (UC-16, UC-17)
                 .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/*").permitAll()
                 // Chỉ Candidate: nộp hồ sơ, hồ sơ của tôi (UC-18, UC-19, UC-20)
@@ -113,7 +111,7 @@ public class SecurityConfig {
     /**
      * Sau khi Spring Security xác thực thành công:
      * 1. Lưu CurrentUser vào session (tương thích code nghiệp vụ hiện có)
-     * 2. Redirect theo role
+     * 2. Redirect về "/", HomeController chuyển tiếp theo vai trò
      */
     private AuthenticationSuccessHandler authSuccessHandler() {
         return (HttpServletRequest request, HttpServletResponse response, Authentication authentication) -> {
@@ -132,13 +130,7 @@ public class SecurityConfig {
             }
             requestCache.removeRequest(request, response);
 
-            String redirectUrl = switch (currentUser.role()) {
-                case ADMIN     -> "/admin/users";
-                case HR        -> "/hr/jobs";
-                case INTERVIEWER -> "/interviews/my";
-                case CANDIDATE -> "/";
-            };
-            response.sendRedirect(request.getContextPath() + redirectUrl);
+            response.sendRedirect(request.getContextPath() + "/");
         };
     }
 

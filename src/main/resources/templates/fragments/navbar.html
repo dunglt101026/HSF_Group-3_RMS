@@ -17,10 +17,6 @@
         <!-- Links & User info -->
         <div class="collapse navbar-collapse" id="rmsNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/demo}">Kiểm tra hệ thống</a>
-                </li>
-
                 <!-- Guest xem việc làm công khai (UC-16) -->
                 <li class="nav-item" th:if="${currentUser == null}">
                     <a class="nav-link" th:href="@{/jobs}">Việc làm</a>
@@ -34,9 +30,7 @@
                     <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
                         <a class="nav-link" th:href="@{/admin/activity-logs}">Nhật ký hoạt động</a>
                     </li>
-                    <li class="nav-item"
-                        th:if="${currentUser.role.name() == 'HR'
-                          or currentUser.role.name() == 'ADMIN'}">
+                    <li class="nav-item" th:if="${currentUser.role.name() == 'HR'}">
                         <a class="nav-link" th:href="@{/hr/jobs}">
                             <i class="bi bi-briefcase me-1"></i>
                             Tin tuyển dụng

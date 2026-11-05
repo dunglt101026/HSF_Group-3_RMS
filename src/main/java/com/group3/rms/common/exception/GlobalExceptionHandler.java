@@ -25,7 +25,7 @@ import java.net.URISyntaxException;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    private static final String DEFAULT_REDIRECT = "/demo/hello";
+    private static final String DEFAULT_REDIRECT = "/";
 
     @ExceptionHandler(BusinessException.class)
     public ModelAndView handleBusiness(BusinessException e, HttpServletRequest request, RedirectAttributes attributes) {
@@ -163,7 +163,7 @@ public class GlobalExceptionHandler {
             }
             return path;
         } catch (URISyntaxException e) {
-            // Referer sai định dạng thì về trang demo hiện có.
+            // Referer sai định dạng thì về trang chủ.
             return DEFAULT_REDIRECT;
         }
     }

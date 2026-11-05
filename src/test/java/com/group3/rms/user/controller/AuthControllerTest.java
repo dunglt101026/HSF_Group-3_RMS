@@ -118,45 +118,9 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("GET /login: Đã đăng nhập vai trò ADMIN -> Tự động chuyển hướng về /admin/users")
-    void getLogin_WhenAlreadyLoggedInAsAdmin_ShouldRedirectToAdminHome() {
+    @DisplayName("GET /login: Đã đăng nhập -> Tự động chuyển hướng về /")
+    void getLogin_WhenAlreadyLoggedIn_ShouldRedirectToHome() {
         fakeCurrentUserService.current = new CurrentUser(1L, "admin", "Admin", RoleCode.ADMIN);
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        Model model = new ConcurrentModel();
-
-        String view = authController.loginPage(request, model);
-
-        assertThat(view).isEqualTo("redirect:/admin/users");
-    }
-
-    @Test
-    @DisplayName("GET /login: Đã đăng nhập vai trò HR -> Tự động chuyển hướng về /hr/jobs")
-    void getLogin_WhenAlreadyLoggedInAsHr_ShouldRedirectToHrHome() {
-        fakeCurrentUserService.current = new CurrentUser(2L, "hr1", "HR 1", RoleCode.HR);
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        Model model = new ConcurrentModel();
-
-        String view = authController.loginPage(request, model);
-
-        assertThat(view).isEqualTo("redirect:/hr/jobs");
-    }
-
-    @Test
-    @DisplayName("GET /login: Đã đăng nhập vai trò INTERVIEWER -> Tự động chuyển hướng về /interviews/my")
-    void getLogin_WhenAlreadyLoggedInAsInterviewer_ShouldRedirectToInterviewerHome() {
-        fakeCurrentUserService.current = new CurrentUser(4L, "interviewer1", "Interviewer 1", RoleCode.INTERVIEWER);
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        Model model = new ConcurrentModel();
-
-        String view = authController.loginPage(request, model);
-
-        assertThat(view).isEqualTo("redirect:/interviews/my");
-    }
-
-    @Test
-    @DisplayName("GET /login: Đã đăng nhập vai trò CANDIDATE -> Tự động chuyển hướng về /")
-    void getLogin_WhenAlreadyLoggedInAsCandidate_ShouldRedirectToCandidateHome() {
-        fakeCurrentUserService.current = new CurrentUser(6L, "candidate1", "Candidate 1", RoleCode.CANDIDATE);
         MockHttpServletRequest request = new MockHttpServletRequest();
         Model model = new ConcurrentModel();
 
@@ -211,7 +175,7 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("GET /register: Đã đăng nhập vai trò CANDIDATE -> Tự động chuyển hướng về /")
+    @DisplayName("GET /register: Đã đăng nhập -> Tự động chuyển hướng về /")
     void getRegister_WhenAlreadyLoggedIn_ShouldRedirectToHome() {
         fakeCurrentUserService.current = new CurrentUser(6L, "candidate1", "Candidate 1", RoleCode.CANDIDATE);
         Model model = new ConcurrentModel();

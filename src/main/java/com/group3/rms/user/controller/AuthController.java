@@ -1,10 +1,8 @@
 package com.group3.rms.user.controller;
 
 import com.group3.rms.common.exception.BusinessException;
-import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.user.dto.RegisterRequest;
-import com.group3.rms.user.entity.RoleCode;
 import com.group3.rms.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -18,8 +16,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.Optional;
 
 @Slf4j
 @Controller
@@ -36,10 +32,9 @@ public class AuthController {
             HttpServletRequest request,
             Model model
     ) {
-        // Nếu đã đăng nhập thì redirect về trang chính theo role
-        Optional<CurrentUser> currentOpt = currentUserService.get();
-        if (currentOpt.isPresent()) {
-            return "redirect:" + redirectUrlForRole(currentOpt.get().role());
+        // Đã đăng nhập thì về "/", HomeController chuyển tiếp theo vai trò
+        if (currentUserService.get().isPresent()) {
+            return "redirect:/";
         }
 
         // Lấy thông báo lỗi từ Spring Security failure handler
@@ -64,9 +59,8 @@ public class AuthController {
 
     @GetMapping("/register")
     public String registerPage(Model model) {
-        Optional<CurrentUser> currentOpt = currentUserService.get();
-        if (currentOpt.isPresent()) {
-            return "redirect:" + redirectUrlForRole(currentOpt.get().role());
+        if (currentUserService.get().isPresent()) {
+            return "redirect:/";
         }
 
         if (!model.containsAttribute("form")) {
@@ -94,17 +88,5 @@ public class AuthController {
             e.applyTo(bindingResult);
             return "auth/register";
         }
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────
-
-    private String redirectUrlForRole(RoleCode role) {
-        if (role == null) return "/";
-        return switch (role) {
-            case ADMIN       -> "/admin/users";
-            case HR          -> "/hr/jobs";
-            case INTERVIEWER -> "/interviews/my";
-            case CANDIDATE   -> "/";
-        };
     }
 }
