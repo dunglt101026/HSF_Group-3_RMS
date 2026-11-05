@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+
+<head>
+    <title>Việc làm</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <h1 class="h3 page-heading mb-4">
+        <i class="bi bi-search me-2"></i>Việc làm đang tuyển
+    </h1>
+
+    <!-- Bộ lọc nằm trên URL; không gửi page để mỗi lần lọc bắt đầu từ trang đầu -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form th:action="@{/jobs}" method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-lg-5">
+                    <label for="keyword" class="form-label">Từ khóa</label>
+                    <input type="search" id="keyword" name="keyword" class="form-control"
+                           th:value="${keyword}" placeholder="Tên vị trí, ví dụ: Java">
+                </div>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <label for="departmentId" class="form-label">Phòng ban</label>
+                    <select id="departmentId" name="departmentId" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option th:each="department : ${filters.departments}"
+                                th:value="${department.id}"
+                                th:text="${department.name}"
+                                th:selected="${department.id == departmentId}">Phòng ban</option>
+                    </select>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-2">
+                    <label for="location" class="form-label">Địa điểm</label>
+                    <select id="location" name="location" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option th:each="item : ${filters.locations}"
+                                th:value="${item}"
+                                th:text="${item}"
+                                th:selected="${item == location}">Địa điểm</option>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-search me-1"></i>Tìm
+                    </button>
+                    <a th:href="@{/jobs}" class="btn btn-outline-secondary" title="Xóa bộ lọc">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Danh sách thẻ tin -->
+    <div th:if="${jobs.empty}" class="card">
+        <div class="card-body text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            Không có việc làm phù hợp.
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-12 col-lg-6" th:each="job : ${jobs.content}">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 fw-bold mb-2" th:text="${job.title}">Tiêu đề</h2>
+                    <div class="text-muted small mb-1">
+                        <i class="bi bi-building me-1"></i><span th:text="${job.departmentName}">Phòng ban</span>
+                        <span class="mx-1">·</span>
+                        <i class="bi bi-geo-alt me-1"></i><span
+                            th:text="${job.location != null ? job.location : 'Chưa cập nhật'}">Địa điểm</span>
+                    </div>
+                    <div class="small mb-1">
+                        <i class="bi bi-cash-coin me-1"></i><span th:text="${job.salaryText}">Mức lương</span>
+                    </div>
+                    <div class="small mb-3">
+                        <i class="bi bi-calendar-event me-1"></i>Hạn nộp:
+                        <span th:text="${#temporals.format(job.deadline, 'dd/MM/yyyy')}">01/01/2026</span>
+                    </div>
+                    <div class="mt-auto">
+                        <a th:href="@{/jobs/{id}(id=${job.id})}" class="btn btn-sm btn-outline-primary">
+                            Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phân trang: giữ nguyên bộ lọc khi chuyển trang -->
+    <nav th:if="${jobs.totalPages > 1}" class="mt-4" aria-label="Phân trang việc làm">
+        <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" th:classappend="${jobs.first} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/jobs(keyword=${keyword},departmentId=${departmentId},location=${location},page=${jobs.number - 1})}">Trước</a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link" th:text="${jobs.number + 1} + ' / ' + ${jobs.totalPages}">1 / 1</span>
+            </li>
+            <li class="page-item" th:classappend="${jobs.last} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{/jobs(keyword=${keyword},departmentId=${departmentId},location=${location},page=${jobs.number + 1})}">Sau</a>
+            </li>
+        </ul>
+    </nav>
+
+</main>
+</body>
+</html>
