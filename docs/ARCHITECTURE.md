@@ -23,8 +23,8 @@ src/main/java/com/group3/rms/
 │   ├── entity/BaseEntity        id + 4 cột audit tự điền
 │   ├── exception/               BusinessException, NotFoundException, ForbiddenException,
 │   │                            GlobalExceptionHandler, ApiExceptionHandler
-│   ├── security/                CurrentUser, CurrentUserService, DevCurrentUserService ("đóng vai")
-│   │                            → khi bật Spring Security thêm SecurityConfig
+│   ├── security/                CurrentUser, CurrentUserService, SessionCurrentUserService,
+│   │                            UserSessionSyncFilter, SecurityConfig (Sprint 3)
 │   ├── storage/                 FileStorageService (lưu / đọc file CV)
 │   └── web/                     GlobalModelAttributes (đưa currentUser vào mọi trang),
 │                                HomeController ("/" → trang chủ theo vai trò)
@@ -142,8 +142,7 @@ public interface CurrentUserService {
 }
 ```
 
-- **Trước khi có Spring Security:** bản dev lưu người dùng được chọn trong session. Thanh điều hướng có ô "Đóng vai: hr1 / interviewer1 / candidate1…", chỉ bật ở profile `local`.
-- **Khi bật Spring Security:** thay bằng bản đọc từ `SecurityContextHolder`. Code đang gọi `CurrentUserService` giữ nguyên.
+- **Spring Security (Sprint 3):** Đã tích hợp `SecurityConfig`, quản lý xác thực bằng form login, phân quyền URL theo vai trò, CSRF token, tự động đồng bộ phiên/hủy phiên khi bị khóa hoặc đổi vai trò (UC-08, UC-09). `CurrentUserService` được cập nhật đồng bộ với `SecurityContextHolder`.
 
 ## 4. Validate và xử lý lỗi: dùng cả hai, mỗi cái một việc
 
@@ -293,7 +292,7 @@ public class GlobalExceptionHandler {
 | Giai đoạn | Việc |
 | :--- | :--- |
 | Từ đầu | Mật khẩu băm BCrypt (chỉ thêm `spring-security-crypto`, chưa thêm `spring-boot-starter-security`); URL theo tiền tố vai trò ngay từ đầu (`/admin/**`, `/hr/**`, `/interviews/**`, `/my/**`; công khai `/`, `/jobs/**`); layout có sẵn thẻ `<meta>` CSRF; mọi thao tác đổi dữ liệu dùng POST; in dữ liệu bằng `th:text`; kiểm tra quyền sở hữu ở service (HR phụ trách, người phỏng vấn được giao, Candidate chủ hồ sơ); file CV lưu ngoài thư mục web, kiểm tra quyền trước khi tải |
-| Giai đoạn cuối | Spring Security: form login, phân quyền URL theo vai trò (`/admin/**`, `/hr/**`, `/interviews/**`, `/my/**`), CSRF, trang 403; thay `CurrentUserService` |
+| Hiện tại (Sprint 3) | Spring Security đã bật: form login, phân quyền URL theo vai trò (`/admin/**`, `/hr/**`, `/interviews/**`, `/applications/**`, `/my/**`), CSRF, trang lỗi 403/404/500 có layout navbar, filter `UserSessionSyncFilter` tự động đồng bộ session khi đổi role và hủy session khi tài khoản bị khóa (UC-08, UC-09). |
 
 Các ràng buộc quản trị trong đặc tả tại `docs/requirements/` phải được kiểm tra ở Service:
 

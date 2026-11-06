@@ -52,6 +52,11 @@ public class AuthController {
             model.addAttribute("successMessage", "Bạn đã đăng xuất thành công.");
         }
 
+        // Thông báo tài khoản bị khóa (UC-08)
+        if (request.getParameter("locked") != null) {
+            model.addAttribute("errorMessage", "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
+        }
+
         return "auth/login";
     }
 

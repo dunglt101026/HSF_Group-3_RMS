@@ -4,7 +4,9 @@ import com.group3.rms.common.security.RmsUserDetails;
 import com.group3.rms.common.security.RmsUserDetailsService;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
+import com.group3.rms.common.security.UserSessionSyncFilter;
 import com.group3.rms.user.entity.RoleCode;
+import com.group3.rms.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
@@ -43,10 +46,14 @@ public class SecurityConfig {
     private final RmsUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserService currentUserService;
+    private final UserRepository userRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            // ── Session Sync (UC-08, UC-09) ────────────────────────────────
+            .addFilterAfter(new UserSessionSyncFilter(userRepository, currentUserService), SecurityContextHolderFilter.class)
+
             // ── Authorization ──────────────────────────────────────────────
             .authorizeHttpRequests(auth -> auth
                 // Static resources & public pages
@@ -64,8 +71,10 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // HR only
                 .requestMatchers("/hr/**").hasRole("HR")
-                // Interviewer, HR and Admin (UC-24 dành cho cả HR)
-                .requestMatchers("/interviews/**").hasAnyRole("INTERVIEWER", "HR", "ADMIN")
+                // Xử lý hồ sơ ứng tuyển (UC-21, UC-22)
+                .requestMatchers("/applications/**").hasAnyRole("HR", "INTERVIEWER")
+                // Interviewer và HR (UC-24: lịch phỏng vấn, service chặn Admin)
+                .requestMatchers("/interviews/**").hasAnyRole("INTERVIEWER", "HR")
                 // Any authenticated user
                 .requestMatchers("/profile/**").authenticated()
                 // Trang chủ ứng viên
@@ -99,7 +108,10 @@ public class SecurityConfig {
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.sendRedirect(request.getContextPath() + "/login");
                 })
-                .accessDeniedPage("/error/403")
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    request.getRequestDispatcher("/error/403").forward(request, response);
+                })
             )
 
             // ── UserDetailsService & PasswordEncoder ───────────────────────
