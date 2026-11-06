@@ -54,29 +54,36 @@
                 <i class="bi bi-calendar-plus me-1"></i>Lên lịch phỏng vấn
             </a>
 
-            <form th:if="${app.actions.canApprove}"
-                  th:action="@{/applications/{id}/approve(id=${app.id})}" method="post"
-                  onsubmit="return confirm('Duyệt hồ sơ này và chuyển sang vòng phỏng vấn?')">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check2-circle me-1"></i>Duyệt hồ sơ
-                </button>
-            </form>
+            <!-- Xác nhận qua modal dùng chung (fragments/confirm-dialog); service vẫn kiểm tra quyền và trạng thái -->
+            <button th:if="${app.actions.canApprove}" type="button" class="btn btn-primary"
+                    data-bs-toggle="modal" data-bs-target="#rmsConfirmModal"
+                    data-confirm-title="Duyệt hồ sơ"
+                    data-confirm-message="Duyệt hồ sơ này và chuyển sang vòng phỏng vấn?"
+                    data-confirm-btn="Duyệt hồ sơ"
+                    data-confirm-class="btn-primary"
+                    th:data-confirm-action="@{/applications/{id}/approve(id=${app.id})}">
+                <i class="bi bi-check2-circle me-1"></i>Duyệt hồ sơ
+            </button>
 
-            <form th:if="${app.actions.canHire}"
-                  th:action="@{/applications/{id}/hire(id=${app.id})}" method="post"
-                  onsubmit="return confirm('Xác nhận tuyển ứng viên này? Thao tác không thể hoàn tác.')">
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-trophy me-1"></i>Tuyển
-                </button>
-            </form>
+            <button th:if="${app.actions.canHire}" type="button" class="btn btn-success"
+                    data-bs-toggle="modal" data-bs-target="#rmsConfirmModal"
+                    data-confirm-title="Tuyển ứng viên"
+                    data-confirm-message="Xác nhận tuyển ứng viên này? Thao tác không thể hoàn tác."
+                    data-confirm-btn="Tuyển"
+                    data-confirm-class="btn-success"
+                    th:data-confirm-action="@{/applications/{id}/hire(id=${app.id})}">
+                <i class="bi bi-trophy me-1"></i>Tuyển
+            </button>
 
-            <form th:if="${app.actions.canReject}"
-                  th:action="@{/applications/{id}/reject(id=${app.id})}" method="post"
-                  onsubmit="return confirm('Xác nhận loại hồ sơ này? Thao tác không thể hoàn tác.')">
-                <button type="submit" class="btn btn-outline-danger">
-                    <i class="bi bi-x-circle me-1"></i>Loại
-                </button>
-            </form>
+            <button th:if="${app.actions.canReject}" type="button" class="btn btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#rmsConfirmModal"
+                    data-confirm-title="Loại hồ sơ"
+                    data-confirm-message="Xác nhận loại hồ sơ này? Thao tác không thể hoàn tác."
+                    data-confirm-btn="Loại hồ sơ"
+                    data-confirm-class="btn-danger"
+                    th:data-confirm-action="@{/applications/{id}/reject(id=${app.id})}">
+                <i class="bi bi-x-circle me-1"></i>Loại
+            </button>
         </div>
     </div>
 
@@ -226,6 +233,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal xác nhận dùng chung cho các nút Duyệt / Tuyển / Loại -->
+    <th:block th:if="${app.actions.canApprove or app.actions.canHire or app.actions.canReject}">
+        <div th:replace="~{fragments/confirm-dialog :: dynamic-modal}"></div>
+    </th:block>
 
 </main>
 </body>
