@@ -96,6 +96,13 @@
               th:text="'(' + ${#temporals.format(app.statusChangedAt, 'dd/MM/yyyy HH:mm')} + ')'"></span>
     </div>
 
+    <!-- HR không phụ trách tin chỉ xem được, nói rõ để khỏi tưởng nút bị mất -->
+    <div th:if="${app.actions.hrViewer and !app.actions.jobOwner and !app.finished()}"
+         class="alert alert-info d-flex align-items-center gap-2">
+        <i class="bi bi-eye"></i>
+        <span>Bạn chỉ có quyền xem hồ sơ này. Chỉ HR phụ trách tin mới duyệt, loại, tuyển hoặc lên lịch phỏng vấn được.</span>
+    </div>
+
     <div class="row g-4">
         <!-- Thông tin ứng viên -->
         <div class="col-12 col-lg-5">
