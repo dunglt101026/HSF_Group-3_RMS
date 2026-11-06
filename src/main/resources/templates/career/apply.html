@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/public}">
+
+<head>
+    <title>Nộp hồ sơ</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8 col-xl-7">
+
+            <a th:href="@{/jobs/{id}(id=${applyForm.jobId})}" class="text-decoration-none">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại chi tiết việc làm
+            </a>
+
+            <h1 class="h3 page-heading mt-3 mb-4">
+                <i class="bi bi-send me-2"></i>Nộp hồ sơ
+            </h1>
+
+            <div class="card">
+                <div class="card-body p-4">
+
+                    <!-- Thông tin chỉ đọc -->
+                    <dl class="row gy-2 mb-4">
+                        <dt class="col-sm-4">Vị trí</dt>
+                        <dd class="col-sm-8 mb-0" th:text="${applyForm.jobTitle}">Vị trí</dd>
+
+                        <dt class="col-sm-4">Họ tên</dt>
+                        <dd class="col-sm-8 mb-0" th:text="${applyForm.candidateFullName}">Họ tên</dd>
+
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8 mb-0 text-break" th:text="${applyForm.candidateEmail}">Email</dd>
+                    </dl>
+
+                    <form th:action="@{/jobs/{id}/apply(id=${applyForm.jobId})}"
+                          th:object="${form}" method="post" enctype="multipart/form-data" novalidate>
+
+                        <div class="mb-3">
+                            <label for="cvFile" class="form-label required">File CV</label>
+                            <input type="file" id="cvFile" name="cvFile" class="form-control"
+                                   accept=".pdf,.doc,.docx"
+                                   th:classappend="${#fields.hasErrors('cvFile')} ? 'is-invalid'">
+                            <div class="form-text">PDF, DOC hoặc DOCX, tối đa 5 MB.</div>
+                            <div class="invalid-feedback" id="cvFileError" th:errors="*{cvFile}">Lỗi</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="coverLetter" class="form-label">Thư giới thiệu</label>
+                            <textarea id="coverLetter" th:field="*{coverLetter}" rows="6" maxlength="2000"
+                                      class="form-control"
+                                      th:classappend="${#fields.hasErrors('coverLetter')} ? 'is-invalid'"
+                                      placeholder="Không bắt buộc, tối đa 2000 ký tự"></textarea>
+                            <div class="invalid-feedback" th:errors="*{coverLetter}">Lỗi</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Nộp hồ sơ
+                            </button>
+                            <a th:href="@{/jobs/{id}(id=${applyForm.jobId})}" class="btn btn-outline-secondary">Hủy</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<th:block layout:fragment="scripts">
+    <script>
+        // Báo sớm khi file quá lớn, tránh phải tải cả file lên mới biết. Server vẫn kiểm tra lại.
+        const MAX_CV_BYTES = 5 * 1024 * 1024;
+        const cvInput = document.getElementById("cvFile");
+
+        cvInput.form.addEventListener("submit", function (event) {
+            const file = cvInput.files[0];
+            if (file && file.size > MAX_CV_BYTES) {
+                event.preventDefault();
+                cvInput.classList.add("is-invalid");
+                document.getElementById("cvFileError").textContent = "CV không được vượt quá 5 MB.";
+            }
+        });
+    </script>
+</th:block>
+
+</body>
+</html>

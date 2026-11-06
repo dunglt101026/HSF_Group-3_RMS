@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    ============================================================================
+    FRAGMENT: pagination.html
+    Thanh điều hướng phân trang dùng chung cho Spring Data Page<?>
+    ============================================================================
+-->
+
+<!-- 1. Thanh phân trang cơ bản (Gọn nhẹ: Trước | Trang X / Y | Sau) -->
+<nav th:fragment="pager(page, baseUrl)"
+     th:if="${page != null and page.totalPages > 1}"
+     class="d-flex justify-content-center my-3"
+     aria-label="Điều hướng phân trang">
+    <ul class="pagination mb-0">
+        <!-- Nút Trước -->
+        <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{${baseUrl}(page=${page.number - 1})}"
+               th:attr="data-page=${page.number - 1}"
+               aria-label="Trang trước">
+                <i class="bi bi-chevron-left me-1"></i>Trước
+            </a>
+        </li>
+
+        <!-- Vị trí trang hiện tại -->
+        <li class="page-item disabled">
+            <span class="page-link text-dark"
+                  th:text="|Trang ${page.number + 1} / ${page.totalPages}|">
+                Trang 1 / 1
+            </span>
+        </li>
+
+        <!-- Nút Sau -->
+        <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+            <a class="page-link"
+               th:href="@{${baseUrl}(page=${page.number + 1})}"
+               th:attr="data-page=${page.number + 1}"
+               aria-label="Trang sau">
+                Sau<i class="bi bi-chevron-right ms-1"></i>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Script tự động giữ nguyên các tham số tìm kiếm/lọc trên URL hiện tại khi bấm chuyển trang -->
+    <script th:inline="javascript">
+        (function() {
+            if (window._rmsPaginationInit) return;
+            window._rmsPaginationInit = true;
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a.page-link[data-page]');
+                if (!link || link.closest('.disabled')) return;
+                const targetPage = link.getAttribute('data-page');
+                if (targetPage !== null && targetPage !== '') {
+                    e.preventDefault();
+                    const url = new URL(link.href, window.location.origin);
+                    const currentParams = new URLSearchParams(window.location.search);
+                    currentParams.set('page', targetPage);
+                    window.location.href = url.pathname + '?' + currentParams.toString();
+                }
+            });
+        })();
+    </script>
+</nav>
+
+<!-- 2. Thanh phân trang đầy đủ có số trang chi tiết và tổng số bản ghi -->
+<div th:fragment="pagination(page, baseUrl)"
+     th:if="${page != null and page.totalPages > 1}"
+     class="d-flex flex-wrap justify-content-between align-items-center gap-3 my-3">
+
+    <!-- Thông tin tổng số bản ghi -->
+    <div class="text-muted small">
+        Hiển thị
+        <span class="fw-semibold" th:text="${page.number * page.size + 1}">1</span>
+        -
+        <span class="fw-semibold"
+              th:text="${(page.number + 1) * page.size < page.totalElements ? (page.number + 1) * page.size : page.totalElements}">10</span>
+        trong tổng số
+        <span class="fw-semibold" th:text="${page.totalElements}">100</span> bản ghi
+    </div>
+
+    <!-- Danh sách số trang -->
+    <nav aria-label="Phân trang danh sách">
+        <ul class="pagination flex-wrap mb-0">
+            <!-- Nút Đầu -->
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{${baseUrl}(page=0)}"
+                   data-page="0"
+                   title="Trang đầu">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+
+            <!-- Nút Trước -->
+            <li class="page-item" th:classappend="${page.first} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{${baseUrl}(page=${page.number - 1})}"
+                   th:attr="data-page=${page.number - 1}"
+                   title="Trang trước">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+
+            <!-- Các số trang lân cận -->
+            <th:block th:with="startPage=${T(java.lang.Math).max(0, page.number - 2)}, endPage=${T(java.lang.Math).min(page.totalPages - 1, page.number + 2)}">
+                <li th:each="i : ${#numbers.sequence(startPage, endPage)}"
+                    class="page-item"
+                    th:classappend="${i == page.number} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{${baseUrl}(page=${i})}"
+                       th:attr="data-page=${i}"
+                       th:text="${i + 1}">1</a>
+                </li>
+            </th:block>
+
+            <!-- Nút Sau -->
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{${baseUrl}(page=${page.number + 1})}"
+                   th:attr="data-page=${page.number + 1}"
+                   title="Trang sau">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+
+            <!-- Nút Cuối -->
+            <li class="page-item" th:classappend="${page.last} ? 'disabled'">
+                <a class="page-link"
+                   th:href="@{${baseUrl}(page=${page.totalPages - 1})}"
+                   th:attr="data-page=${page.totalPages - 1}"
+                   title="Trang cuối">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+</body>
+</html>

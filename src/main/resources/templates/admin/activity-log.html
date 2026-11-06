@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhật ký hoạt động - RMS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="bg-light">
+    <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+
+    <main class="container-fluid px-3 px-lg-5 py-4">
+        <h1 class="h3 fw-bold mb-4">Nhật ký hoạt động</h1>
+
+        <div th:replace="~{fragments/flash :: flash-messages}"></div>
+
+        <div class="card border-0 shadow-sm rounded-3 mb-4">
+            <div class="card-body">
+                <!-- Không gửi page để mỗi lần lọc bắt đầu từ trang đầu. -->
+                <form th:action="@{/admin/activity-logs}" method="get" class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="action" class="form-label fw-semibold">Hành động</label>
+                        <select id="action" name="action" class="form-select"
+                                th:classappend="${invalidField == 'action'} ? 'is-invalid' : ''">
+                            <option value="">Tất cả hành động</option>
+                            <option th:if="${invalidField == 'action'}" th:value="${action}" selected
+                                    th:text="|Không hợp lệ: ${action}|">Không hợp lệ</option>
+                            <option th:each="auditAction : ${auditActions}"
+                                    th:value="${auditAction.name()}" th:text="${auditAction.name()}"
+                                    th:selected="${action == auditAction.name()}">Hành động</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 col-xl-3">
+                        <label for="actor" class="form-label fw-semibold">Người thực hiện</label>
+                        <input type="search" id="actor" name="actor" class="form-control"
+                               th:value="${actor}" maxlength="50" placeholder="Tên đăng nhập hoặc system"
+                               th:classappend="${invalidField == 'actor'} ? 'is-invalid' : ''">
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-2">
+                        <label for="fromDate" class="form-label fw-semibold">Từ ngày</label>
+                        <input type="date" id="fromDate" name="fromDate" class="form-control"
+                               th:value="${fromDate}" min="0001-01-01" max="9999-12-31"
+                               th:classappend="${invalidField == 'fromDate'} ? 'is-invalid' : ''">
+                        <div th:if="${invalidField == 'fromDate'}" class="invalid-feedback text-break"
+                             th:text="|Giá trị đã nhập: ${fromDate}|">Ngày không hợp lệ</div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-2">
+                        <label for="toDate" class="form-label fw-semibold">Đến ngày</label>
+                        <input type="date" id="toDate" name="toDate" class="form-control"
+                               th:value="${toDate}" min="0001-01-01" max="9999-12-31"
+                               th:classappend="${invalidField == 'toDate'} ? 'is-invalid' : ''">
+                        <div th:if="${invalidField == 'toDate'}" class="invalid-feedback text-break"
+                             th:text="|Giá trị đã nhập: ${toDate}|">Ngày không hợp lệ</div>
+                    </div>
+                    <div class="col-12 col-xl-2 d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">Lọc</button>
+                        <a th:href="@{/admin/activity-logs}" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${invalidField == 'page'}" class="mb-3">
+            <a th:href="@{/admin/activity-logs(action=${action},actor=${actor},fromDate=${fromDate},toDate=${toDate},page=0)}"
+               class="btn btn-outline-primary">Về trang đầu</a>
+        </div>
+
+        <section th:if="${activityLogs != null}" aria-label="Danh sách nhật ký hoạt động"
+                 class="card border-0 shadow-sm rounded-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3">Thời gian</th>
+                            <th scope="col">Người thực hiện</th>
+                            <th scope="col">Hành động</th>
+                            <th scope="col">Đối tượng</th>
+                            <th scope="col" class="pe-3">Chi tiết</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="entry : ${activityLogs.content}">
+                            <td class="ps-3 text-nowrap"
+                                th:text="${entry.createdAt == null} ? '—' : ${#temporals.format(entry.createdAt, 'dd/MM/yyyy HH:mm:ss')}">—</td>
+                            <td class="text-break" th:text="${entry.actor}">Người thực hiện</td>
+                            <td class="text-break" th:text="${entry.action}">Hành động</td>
+                            <td>
+                                <span th:if="${entry.targetType == null and entry.targetId == null}">—</span>
+                                <th:block th:unless="${entry.targetType == null and entry.targetId == null}">
+                                    <span th:text="${entry.targetType == null} ? '—' : ${entry.targetType}">—</span>
+                                    <span class="text-nowrap" th:text="${entry.targetId == null} ? '—' : |#${entry.targetId}|">—</span>
+                                </th:block>
+                            </td>
+                            <td class="pe-3 text-break" style="white-space: pre-wrap;"
+                                th:text="${entry.detail == null} ? '—' : ${entry.detail}">—</td>
+                        </tr>
+                        <tr th:if="${activityLogs.empty}">
+                            <td colspan="5" class="text-center text-muted py-5">Không có hoạt động nào phù hợp.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-body border-top d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <span class="text-muted small" th:text="|Tổng số: ${activityLogs.totalElements} bản ghi|">Tổng số: 0 bản ghi</span>
+                <nav aria-label="Phân trang nhật ký hoạt động">
+                    <ul class="pagination flex-wrap mb-0">
+                        <li class="page-item" th:classappend="${!activityLogs.hasPrevious()} ? 'disabled' : ''">
+                            <a th:if="${activityLogs.hasPrevious()}" class="page-link"
+                               th:href="@{/admin/activity-logs(action=${action},actor=${actor},fromDate=${fromDate},toDate=${toDate},page=${activityLogs.number - 1})}">
+                                Trước
+                            </a>
+                            <span th:unless="${activityLogs.hasPrevious()}" class="page-link" aria-disabled="true">Trước</span>
+                        </li>
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link"
+                                  th:text="|Trang ${activityLogs.totalPages == 0 ? 0 : activityLogs.number + 1} / ${activityLogs.totalPages}|">Trang 0 / 0</span>
+                        </li>
+                        <li class="page-item" th:classappend="${!activityLogs.hasNext()} ? 'disabled' : ''">
+                            <a th:if="${activityLogs.hasNext()}" class="page-link"
+                               th:href="@{/admin/activity-logs(action=${action},actor=${actor},fromDate=${fromDate},toDate=${toDate},page=${activityLogs.number + 1})}">
+                                Sau
+                            </a>
+                            <span th:unless="${activityLogs.hasNext()}" class="page-link" aria-disabled="true">Sau</span>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

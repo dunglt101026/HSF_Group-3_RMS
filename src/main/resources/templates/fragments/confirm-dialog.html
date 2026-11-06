@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    ============================================================================
+    FRAGMENT: confirm-dialog.html
+    Hộp thoại Modal xác nhận hành động dùng chung (Bootstrap 5 Modal)
+    Tương thích Spring Security CSRF & không phụ thuộc thư viện ngoài.
+    ============================================================================
+-->
+
+<!-- 1. Modal xác nhận theo form hành động cụ thể -->
+<div th:fragment="modal(id, title, message, formAction, submitText, btnClass)"
+     class="modal fade"
+     th:id="${id}"
+     tabindex="-1"
+     th:aria-labelledby="|${id}Label|"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" th:id="|${id}Label|">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                    <span th:text="${title != null ? title : 'Xác nhận thao tác'}">Xác nhận</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-0 text-secondary"
+                   th:text="${message != null ? message : 'Bạn có chắc chắn muốn thực hiện hành động này không?'}">
+                    Bạn có chắc chắn muốn thực hiện hành động này không?
+                </p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Hủy bỏ
+                </button>
+                <form th:action="${formAction}" method="post" class="d-inline m-0">
+                    <!-- CSRF Token hỗ trợ Spring Security -->
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit"
+                            class="btn fw-semibold"
+                            th:classappend="${btnClass != null ? btnClass : 'btn-danger'}"
+                            th:text="${submitText != null ? submitText : 'Xác nhận'}">
+                        Xác nhận
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Modal xác nhận động (Một modal duy nhất dùng cho nhiều nút bấm trên cùng trang) -->
+<div th:fragment="dynamic-modal"
+     class="modal fade"
+     id="rmsConfirmModal"
+     tabindex="-1"
+     aria-labelledby="rmsConfirmModalTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="rmsConfirmModalTitle">
+                    <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                    <span id="rmsConfirmTitleText">Xác nhận</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body py-3">
+                <p class="mb-0 text-secondary" id="rmsConfirmMessageText">
+                    Bạn có chắc chắn muốn thực hiện hành động này không?
+                </p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Hủy bỏ
+                </button>
+                <form id="rmsConfirmForm" action="" method="post" class="d-inline m-0">
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" id="rmsConfirmSubmitBtn" class="btn btn-danger fw-semibold">
+                        Xác nhận
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script tự động cập nhật nội dung modal động khi người dùng bấm vào nút kích hoạt -->
+    <script th:inline="javascript">
+        (function() {
+            const modalEl = document.getElementById('rmsConfirmModal');
+            if (!modalEl) return;
+
+            modalEl.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                if (!button) return;
+
+                const title = button.getAttribute('data-confirm-title') || 'Xác nhận';
+                const message = button.getAttribute('data-confirm-message') || 'Bạn có chắc chắn muốn thực hiện hành động này?';
+                const action = button.getAttribute('data-confirm-action') || '';
+                const btnText = button.getAttribute('data-confirm-btn') || 'Xác nhận';
+                const btnClass = button.getAttribute('data-confirm-class') || 'btn-danger';
+
+                document.getElementById('rmsConfirmTitleText').textContent = title;
+                document.getElementById('rmsConfirmMessageText').textContent = message;
+                document.getElementById('rmsConfirmForm').setAttribute('action', action);
+
+                const submitBtn = document.getElementById('rmsConfirmSubmitBtn');
+                submitBtn.textContent = btnText;
+                submitBtn.className = 'btn fw-semibold ' + btnClass;
+            });
+        })();
+    </script>
+</div>
+
+</body>
+</html>

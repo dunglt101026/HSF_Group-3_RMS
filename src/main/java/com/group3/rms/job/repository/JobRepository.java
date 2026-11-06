@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -38,4 +40,12 @@ public interface JobRepository extends JpaRepository<Job, Long>,
             JobStatus status,
             LocalDate deadline
     );
+
+    // UC-16: các địa điểm của tin đang tuyển, để hiện trong ô lọc địa điểm.
+    @Query("""
+            select distinct j.location from Job j
+            where j.status = :status and j.deleted = false and j.location is not null
+            order by j.location
+            """)
+    List<String> findLocationsByStatus(@Param("status") JobStatus status);
 }
