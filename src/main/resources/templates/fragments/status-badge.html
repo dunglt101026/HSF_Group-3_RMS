@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    ============================================================================
+    FRAGMENT: status-badge.html
+    Nhãn màu trạng thái dùng chung (Bootstrap 5 badges)
+    Hỗ trợ: JobStatus, ApplicationStatus, InterviewStatus, UserStatus, RoleCode
+    ============================================================================
+-->
+
+<!-- 1. Trạng thái tin tuyển dụng (JobStatus) -->
+<th:block th:fragment="job-status(status)">
+    <th:block th:if="${status != null}">
+        <span th:if="${#strings.toString(status) == 'DRAFT'}" class="badge text-bg-secondary">
+            <i class="bi bi-pencil-square me-1"></i>Nháp
+        </span>
+        <span th:if="${#strings.toString(status) == 'ACTIVE'}" class="badge text-bg-success">
+            <i class="bi bi-check-circle me-1"></i>Đang tuyển
+        </span>
+        <span th:if="${#strings.toString(status) == 'CLOSED'}" class="badge text-bg-dark">
+            <i class="bi bi-lock me-1"></i>Đã đóng
+        </span>
+    </th:block>
+</th:block>
+
+<!-- 2. Trạng thái hồ sơ ứng tuyển (ApplicationStatus) -->
+<th:block th:fragment="application-status(status)">
+    <th:block th:if="${status != null}">
+        <span th:if="${#strings.toString(status) == 'APPLIED'}" class="badge text-bg-primary">
+            <i class="bi bi-inbox me-1"></i>Chờ duyệt
+        </span>
+        <span th:if="${#strings.toString(status) == 'INTERVIEW'}" class="badge" style="background-color: #6f42c1; color: #fff;">
+            <i class="bi bi-calendar-event me-1"></i>Phỏng vấn
+        </span>
+        <span th:if="${#strings.toString(status) == 'HIRED'}" class="badge text-bg-success">
+            <i class="bi bi-person-check me-1"></i>Đã tuyển
+        </span>
+        <span th:if="${#strings.toString(status) == 'REJECTED'}" class="badge text-bg-danger">
+            <i class="bi bi-x-circle me-1"></i>Đã loại
+        </span>
+        <span th:if="${#strings.toString(status) == 'WITHDRAWN'}" class="badge text-bg-secondary">
+            <i class="bi bi-dash-circle me-1"></i>Đã rút
+        </span>
+    </th:block>
+</th:block>
+
+<!-- 3. Trạng thái vòng phỏng vấn (InterviewStatus) -->
+<th:block th:fragment="interview-status(status)">
+    <th:block th:if="${status != null}">
+        <span th:if="${#strings.toString(status) == 'SCHEDULED'}" class="badge text-bg-primary">
+            <i class="bi bi-clock me-1"></i>Đã lên lịch
+        </span>
+        <span th:if="${#strings.toString(status) == 'EVALUATED'}" class="badge text-bg-success">
+            <i class="bi bi-clipboard-check me-1"></i>Đã đánh giá
+        </span>
+    </th:block>
+</th:block>
+
+<!-- 4. Trạng thái tài khoản người dùng (UserStatus) -->
+<th:block th:fragment="user-status(status)">
+    <th:block th:if="${status != null}">
+        <span th:if="${#strings.toString(status) == 'ACTIVE'}" class="badge text-bg-success">
+            <i class="bi bi-check-circle me-1"></i>Hoạt động
+        </span>
+        <span th:if="${#strings.toString(status) == 'INACTIVE'}" class="badge text-bg-danger">
+            <i class="bi bi-slash-circle me-1"></i>Đã khóa
+        </span>
+    </th:block>
+</th:block>
+
+<!-- 5. Huy hiệu vai trò (RoleCode) -->
+<th:block th:fragment="role-badge(role)">
+    <th:block th:if="${role != null}">
+        <span th:if="${#strings.toString(role) == 'ADMIN'}" class="badge text-bg-danger">
+            <i class="bi bi-shield-lock me-1"></i>Admin
+        </span>
+        <span th:if="${#strings.toString(role) == 'HR'}" class="badge text-bg-primary">
+            <i class="bi bi-person-badge me-1"></i>HR
+        </span>
+        <span th:if="${#strings.toString(role) == 'INTERVIEWER'}" class="badge text-bg-info text-dark">
+            <i class="bi bi-mic me-1"></i>Phỏng vấn viên
+        </span>
+        <span th:if="${#strings.toString(role) == 'CANDIDATE'}" class="badge text-bg-secondary">
+            <i class="bi bi-person me-1"></i>Ứng viên
+        </span>
+    </th:block>
+</th:block>
+
+<!-- 6. Huy hiệu tự động nhận diện (Generic Status Badge) -->
+<th:block th:fragment="status-badge(status)">
+    <th:block th:if="${status != null}">
+        <!-- JobStatus -->
+        <th:block th:if="${#strings.toString(status) == 'DRAFT' or #strings.toString(status) == 'ACTIVE' or #strings.toString(status) == 'CLOSED'}">
+            <th:block th:replace="~{fragments/status-badge :: job-status(${status})}"></th:block>
+        </th:block>
+        <!-- ApplicationStatus -->
+        <th:block th:if="${#strings.toString(status) == 'APPLIED' or #strings.toString(status) == 'INTERVIEW' or #strings.toString(status) == 'HIRED' or #strings.toString(status) == 'REJECTED' or #strings.toString(status) == 'WITHDRAWN'}">
+            <th:block th:replace="~{fragments/status-badge :: application-status(${status})}"></th:block>
+        </th:block>
+        <!-- InterviewStatus -->
+        <th:block th:if="${#strings.toString(status) == 'SCHEDULED' or #strings.toString(status) == 'EVALUATED'}">
+            <th:block th:replace="~{fragments/status-badge :: interview-status(${status})}"></th:block>
+        </th:block>
+        <!-- UserStatus -->
+        <th:block th:if="${#strings.toString(status) == 'INACTIVE'}">
+            <th:block th:replace="~{fragments/status-badge :: user-status(${status})}"></th:block>
+        </th:block>
+    </th:block>
+</th:block>
+
+</body>
+</html>
