@@ -9,6 +9,7 @@ public record JobSummaryResponse(
         Long id,
         String title,
         String departmentName,
+        Long ownerId,
         String ownerName,
         JobStatus status,
         LocalDate deadline,

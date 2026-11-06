@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/staff}">
+
+<head>
+    <title>Hồ sơ ứng viên của tin</title>
+</head>
+
+<body>
+<main layout:fragment="content">
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a th:href="@{/hr/jobs}" class="text-decoration-none">Tin tuyển dụng</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a th:href="@{/hr/jobs/{id}(id=${job.id})}"
+                   class="text-decoration-none"
+                   th:text="${job.title}">Tin</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">Hồ sơ ứng viên</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="page-heading mb-1">Hồ sơ ứng viên</h2>
+            <p class="text-muted mb-0" th:text="${job.title}"></p>
+        </div>
+
+        <span th:if="${job.status.name() == 'DRAFT'}"
+              class="badge text-bg-secondary fs-6">Nháp</span>
+        <span th:if="${job.status.name() == 'ACTIVE'}"
+              class="badge text-bg-success fs-6">Đang tuyển</span>
+        <span th:if="${job.status.name() == 'CLOSED'}"
+              class="badge text-bg-dark fs-6">Đã đóng</span>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${selectedStatus == null} ? 'active'"
+                       th:href="@{/hr/jobs/{id}/applications(id=${job.id})}">
+                        Tất cả
+                        <span class="badge text-bg-secondary ms-1" th:text="${stats.total}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${selectedStatus != null and selectedStatus.name() == 'APPLIED'} ? 'active'"
+                       th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status='APPLIED')}">
+                        Chờ duyệt
+                        <span class="badge text-bg-secondary ms-1" th:text="${stats.applied}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${selectedStatus != null and selectedStatus.name() == 'INTERVIEW'} ? 'active'"
+                       th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status='INTERVIEW')}">
+                        Phỏng vấn
+                        <span class="badge text-bg-secondary ms-1" th:text="${stats.interviewing}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${selectedStatus != null and selectedStatus.name() == 'HIRED'} ? 'active'"
+                       th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status='HIRED')}">
+                        Đã tuyển
+                        <span class="badge text-bg-secondary ms-1" th:text="${stats.hired}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${selectedStatus != null and selectedStatus.name() == 'REJECTED'} ? 'active'"
+                       th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status='REJECTED')}">
+                        Đã loại
+                        <span class="badge text-bg-secondary ms-1" th:text="${stats.rejected}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       th:classappend="${selectedStatus != null and selectedStatus.name() == 'WITHDRAWN'} ? 'active'"
+                       th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status='WITHDRAWN')}">
+                        Đã rút
+                        <span class="badge text-bg-secondary ms-1" th:text="${stats.withdrawn}">0</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Ứng viên</th>
+                        <th>Ngày nộp</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Số vòng phỏng vấn</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="item : ${applications.content}">
+                        <td class="fw-semibold" th:text="${item.candidateName}"></td>
+
+                        <td th:text="${item.appliedAt != null
+                                ? #temporals.format(item.appliedAt, 'dd/MM/yyyy HH:mm')
+                                : 'Chưa cập nhật'}">
+                        </td>
+
+                        <td>
+                            <span th:if="${item.status.name() == 'APPLIED'}"
+                                  class="badge text-bg-info">Chờ duyệt</span>
+                            <span th:if="${item.status.name() == 'INTERVIEW'}"
+                                  class="badge text-bg-primary">Phỏng vấn</span>
+                            <span th:if="${item.status.name() == 'HIRED'}"
+                                  class="badge text-bg-success">Đã tuyển</span>
+                            <span th:if="${item.status.name() == 'REJECTED'}"
+                                  class="badge text-bg-danger">Đã loại</span>
+                            <span th:if="${item.status.name() == 'WITHDRAWN'}"
+                                  class="badge text-bg-secondary">Đã rút</span>
+                        </td>
+
+                        <td class="text-center" th:text="${item.interviewCount}"></td>
+                    </tr>
+
+                    <tr th:if="${applications.empty}">
+                        <td colspan="4" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted"></i>
+                            <p class="text-muted mt-2 mb-0">
+                                Chưa có ứng viên ở trạng thái này.
+                            </p>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <nav th:if="${applications.totalPages > 1}">
+                <ul class="pagination justify-content-end mb-0">
+
+                    <li class="page-item" th:classappend="${applications.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status=${selectedStatus}, page=${applications.number - 1})}">
+                            Trước
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link"
+                              th:text="${applications.number + 1} + ' / ' + ${applications.totalPages}">
+                        </span>
+                    </li>
+
+                    <li class="page-item" th:classappend="${applications.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/hr/jobs/{id}/applications(id=${job.id}, status=${selectedStatus}, page=${applications.number + 1})}">
+                            Sau
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+
+        </div>
+    </div>
+
+</main>
+</body>
+</html>

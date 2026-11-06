@@ -19,6 +19,7 @@ public record JobResponse(
         JobStatus status,
         LocalDateTime publishedAt,
         String departmentName,
+        Long ownerId,
         String ownerName,
         List<String> skills,
         Long departmentId,
