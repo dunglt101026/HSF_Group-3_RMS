@@ -34,4 +34,19 @@ public class HomeController {
                 .orElse("/jobs");
         return "redirect:" + target;
     }
+
+    @GetMapping("/error/403")
+    public String error403() {
+        return "error/403";
+    }
+
+    @GetMapping("/error/404")
+    public String error404() {
+        return "error/404";
+    }
+
+    @GetMapping("/error/500")
+    public String error500() {
+        return "error/500";
+    }
 }

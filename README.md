@@ -12,7 +12,7 @@ Hệ thống quản lý tuyển dụng nội bộ: HR đăng tin, nhận hồ s�
 | CSDL | Microsoft SQL Server |
 | Mapping | MapStruct (Entity ↔ DTO), DTO dạng Java `record` |
 | Tiện ích | Lombok, Spring Boot DevTools |
-| Bảo mật | Mật khẩu BCrypt; Spring Security bổ sung ở giai đoạn cuối |
+| Bảo mật | Spring Security (form login, phân quyền URL theo vai trò, CSRF, tự đồng bộ session), mật khẩu BCrypt |
 
 ## Thư mục
 

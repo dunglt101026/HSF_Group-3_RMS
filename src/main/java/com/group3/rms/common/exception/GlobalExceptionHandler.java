@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -42,9 +43,10 @@ public class GlobalExceptionHandler {
         return errorResponse(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin bạn yêu cầu.", request);
     }
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ModelAndView handleForbidden(ForbiddenException e, HttpServletRequest request) {
-        return errorResponse(HttpStatus.FORBIDDEN, e.getMessage(), request);
+    @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
+    public ModelAndView handleForbidden(Exception e, HttpServletRequest request) {
+        String message = (e instanceof ForbiddenException) ? e.getMessage() : "Bạn không có quyền truy cập trang hoặc thực hiện thao tác này.";
+        return errorResponse(HttpStatus.FORBIDDEN, message, request);
     }
 
     @ExceptionHandler(Exception.class)
