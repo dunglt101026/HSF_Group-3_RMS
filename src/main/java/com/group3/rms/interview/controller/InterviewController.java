@@ -62,11 +62,23 @@ public class InterviewController {
     // SCR-19: Lịch phỏng vấn của tôi (UC-24).
     @GetMapping("/interviews/my")
     public String mySchedule(
-            @RequestParam(defaultValue = "UPCOMING") MyInterviewTab tab,
+            @RequestParam(required = false) String tab,
             Model model
     ) {
-        model.addAttribute("schedule", interviewService.getMySchedule(tab));
+        model.addAttribute("schedule", interviewService.getMySchedule(parseTab(tab)));
         return "interview/my-schedule";
+    }
+
+    /** Giá trị tab sai hoặc thiếu thì mở tab "Sắp tới" thay vì trả trang trắng 400. */
+    private static MyInterviewTab parseTab(String tab) {
+        if (tab != null) {
+            for (MyInterviewTab candidate : MyInterviewTab.values()) {
+                if (candidate.name().equalsIgnoreCase(tab.trim())) {
+                    return candidate;
+                }
+            }
+        }
+        return MyInterviewTab.UPCOMING;
     }
 
     // SCR-20: Đánh giá phỏng vấn (UC-25).
