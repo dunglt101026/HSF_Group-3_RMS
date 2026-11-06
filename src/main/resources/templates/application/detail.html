@@ -8,11 +8,6 @@
     <title>Chi tiết hồ sơ</title>
     <th:block layout:fragment="styles">
         <style>
-            .badge-interview {
-                background: #6f42c1;
-                color: #fff;
-            }
-
             .rating-stars {
                 color: #f59e0b;
                 letter-spacing: 1px;
@@ -153,12 +148,8 @@
                             th:text="${#temporals.format(app.appliedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</dd>
 
                         <dt class="col-sm-4">Trạng thái</dt>
-                        <dd class="col-sm-8 mb-0" th:switch="${app.status.name()}">
-                            <span th:case="'APPLIED'" class="badge text-bg-primary">Chờ duyệt</span>
-                            <span th:case="'INTERVIEW'" class="badge badge-interview">Phỏng vấn</span>
-                            <span th:case="'HIRED'" class="badge text-bg-success">Đã tuyển</span>
-                            <span th:case="'REJECTED'" class="badge text-bg-danger">Đã loại</span>
-                            <span th:case="'WITHDRAWN'" class="badge text-bg-secondary">Đã rút</span>
+                        <dd class="col-sm-8 mb-0">
+                            <th:block th:replace="~{fragments/status-badge :: application-status(${app.status})}"></th:block>
                         </dd>
 
                         <dt class="col-sm-4">Thư giới thiệu</dt>
@@ -204,8 +195,7 @@
                             th:text="${#temporals.format(round.scheduledAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
                         <td class="text-break" th:text="${round.location}">Phòng họp</td>
                         <td>
-                            <span th:if="${round.status.name() == 'EVALUATED'}" class="badge text-bg-success">Đã đánh giá</span>
-                            <span th:if="${round.status.name() == 'SCHEDULED'}" class="badge text-bg-primary">Đã lên lịch</span>
+                            <th:block th:replace="~{fragments/status-badge :: interview-status(${round.status})}"></th:block>
                         </td>
                         <td class="text-nowrap">
                             <span th:if="${round.rating != null}" class="rating-stars"
