@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi"
       xmlns:th="http://www.thymeleaf.org"
@@ -31,6 +30,14 @@
                   th:action="${formAction}"
                   method="post">
 
+                <div class="alert alert-danger"
+                     th:if="${#fields.hasGlobalErrors()}">
+                    <p class="mb-0"
+                       th:each="error : ${#fields.globalErrors()}"
+                       th:text="${error}">
+                    </p>
+                </div>
+
                 <!-- Thông tin cơ bản -->
                 <h5 class="fw-bold mb-3">Thông tin cơ bản</h5>
 
@@ -44,9 +51,13 @@
                                type="text"
                                th:field="*{title}"
                                class="form-control"
+                               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
                                maxlength="200"
-                               placeholder="Ví dụ: Java Backend Developer"
-                               required>
+                               placeholder="Ví dụ: Java Backend Developer">
+                        <div class="invalid-feedback d-block"
+                             th:if="${#fields.hasErrors('title')}"
+                             th:errors="*{title}">
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -56,13 +67,17 @@
                         <select id="departmentId"
                                 th:field="*{departmentId}"
                                 class="form-select"
-                                required>
+                                th:classappend="${#fields.hasErrors('departmentId')} ? 'is-invalid'">
                             <option value="">-- Chọn phòng ban --</option>
-                            <option th:each="department : ${departments}"
+                            <option th:each="department : ${formOptions.departments}"
                                     th:value="${department.id}"
                                     th:text="${department.name}">
                             </option>
                         </select>
+                        <div class="invalid-feedback d-block"
+                             th:if="${#fields.hasErrors('departmentId')}"
+                             th:errors="*{departmentId}">
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -73,8 +88,13 @@
                                type="text"
                                th:field="*{location}"
                                class="form-control"
+                               th:classappend="${#fields.hasErrors('location')} ? 'is-invalid'"
                                maxlength="200"
                                placeholder="Ví dụ: Hà Nội">
+                        <div class="invalid-feedback d-block"
+                             th:if="${#fields.hasErrors('location')}"
+                             th:errors="*{location}">
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -85,9 +105,14 @@
                                type="number"
                                th:field="*{salaryMin}"
                                class="form-control"
+                               th:classappend="${#fields.hasErrors('salaryMin')} ? 'is-invalid'"
                                min="0"
                                step="100000"
                                placeholder="Ví dụ: 10000000">
+                        <div class="invalid-feedback d-block"
+                             th:if="${#fields.hasErrors('salaryMin')}"
+                             th:errors="*{salaryMin}">
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -98,9 +123,14 @@
                                type="number"
                                th:field="*{salaryMax}"
                                class="form-control"
+                               th:classappend="${#fields.hasErrors('salaryMax')} ? 'is-invalid'"
                                min="0"
                                step="100000"
                                placeholder="Ví dụ: 20000000">
+                        <div class="invalid-feedback d-block"
+                             th:if="${#fields.hasErrors('salaryMax')}"
+                             th:errors="*{salaryMax}">
+                        </div>
                     </div>
 
                     <div class="col-md-6">
@@ -111,7 +141,11 @@
                                type="date"
                                th:field="*{deadline}"
                                class="form-control"
-                               required>
+                               th:classappend="${#fields.hasErrors('deadline')} ? 'is-invalid'">
+                        <div class="invalid-feedback d-block"
+                             th:if="${#fields.hasErrors('deadline')}"
+                             th:errors="*{deadline}">
+                        </div>
                     </div>
 
                 </div>
@@ -128,9 +162,13 @@
                     <textarea id="description"
                               th:field="*{description}"
                               class="form-control"
+                              th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
                               rows="8"
-                              placeholder="Mô tả công việc, trách nhiệm và yêu cầu ứng viên..."
-                              required></textarea>
+                              placeholder="Mô tả công việc, trách nhiệm và yêu cầu ứng viên..."></textarea>
+                    <div class="invalid-feedback d-block"
+                         th:if="${#fields.hasErrors('description')}"
+                         th:errors="*{description}">
+                    </div>
                 </div>
 
                 <hr class="my-4">
@@ -140,7 +178,7 @@
 
                 <div class="row g-3">
                     <div class="col-md-4 col-sm-6"
-                         th:each="skill : ${skills}">
+                         th:each="skill : ${formOptions.skills}">
                         <div class="form-check border rounded p-3 ps-5">
                             <input class="form-check-input"
                                    type="checkbox"
@@ -156,6 +194,11 @@
                     </div>
                 </div>
 
+                <div class="invalid-feedback d-block"
+                     th:if="${#fields.hasErrors('skillIds')}"
+                     th:errors="*{skillIds}">
+                </div>
+
                 <hr class="my-4">
 
                 <!-- Nút -->
@@ -167,7 +210,7 @@
 
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i>
-                        <span th:text="${job != null ? 'Lưu thay đổi' : 'Tạo tin tuyển dụng'}"></span>
+                        <span th:text="${job != null ? 'Lưu' : 'Lưu nháp'}"></span>
                     </button>
                 </div>
 

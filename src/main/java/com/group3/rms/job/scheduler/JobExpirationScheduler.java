@@ -13,12 +13,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JobExpirationScheduler {
+
+    private static final ZoneId BUSINESS_ZONE =
+            ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final JobRepository jobRepository;
     private final AuditLogService auditLogService;
@@ -29,7 +33,7 @@ public class JobExpirationScheduler {
     )
     @Transactional
     public void closeExpiredJobs() {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(BUSINESS_ZONE);
 
         List<Job> expiredJobs =
                 jobRepository.findAllByStatusAndDeadlineLessThanAndDeletedFalse(

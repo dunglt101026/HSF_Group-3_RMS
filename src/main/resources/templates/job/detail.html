@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi"
       xmlns:th="http://www.thymeleaf.org"
@@ -17,33 +16,40 @@
             <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
         </a>
 
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2 flex-wrap"
+             th:with="isOwner=${currentUser != null and job.ownerId == currentUser.id}">
 
-            <a th:if="${job.status.name() != 'CLOSED'}"
+            <a th:href="@{/hr/jobs/{id}/applications(id=${job.id})}"
+               class="btn btn-outline-primary">
+                <i class="bi bi-people me-1"></i>
+                <span th:text="'Hồ sơ (' + ${stats.total} + ')'">Hồ sơ (0)</span>
+            </a>
+
+            <a th:if="${isOwner and job.status.name() != 'CLOSED'}"
                th:href="@{/hr/jobs/{id}/edit(id=${job.id})}"
                class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-1"></i>Sửa
             </a>
 
-            <form th:if="${job.status.name() == 'DRAFT'}"
+            <form th:if="${isOwner and job.status.name() == 'DRAFT'}"
                   th:action="@{/hr/jobs/{id}/publish(id=${job.id})}"
                   method="post"
-                  onsubmit="return confirm('Bạn có chắc muốn đăng tin này?')">
+                  onsubmit="return confirm('Bạn có chắc muốn xuất bản tin này?')">
                 <button class="btn btn-success" type="submit">
-                    <i class="bi bi-send me-1"></i>Đăng tuyển
+                    <i class="bi bi-send me-1"></i>Xuất bản
                 </button>
             </form>
 
-            <form th:if="${job.status.name() == 'ACTIVE'}"
+            <form th:if="${isOwner and job.status.name() == 'ACTIVE'}"
                   th:action="@{/hr/jobs/{id}/close(id=${job.id})}"
                   method="post"
                   onsubmit="return confirm('Bạn có chắc muốn đóng tin này?')">
                 <button class="btn btn-warning" type="submit">
-                    <i class="bi bi-lock me-1"></i>Đóng tin
+                    <i class="bi bi-lock me-1"></i>Đóng
                 </button>
             </form>
 
-            <form th:if="${job.status.name() == 'DRAFT'}"
+            <form th:if="${isOwner and job.status.name() == 'DRAFT' and stats.total == 0}"
                   th:action="@{/hr/jobs/{id}/delete(id=${job.id})}"
                   method="post"
                   onsubmit="return confirm('Bạn chắc chắn muốn xóa tin tuyển dụng này?')">
@@ -53,6 +59,12 @@
             </form>
 
         </div>
+    </div>
+
+    <div class="alert alert-warning"
+         th:if="${job.status.name() == 'CLOSED'}">
+        <i class="bi bi-lock me-1"></i>
+        Tin đã đóng, không nhận thêm hồ sơ.
     </div>
 
     <div class="card mb-4">
@@ -122,6 +134,59 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-people me-2"></i>Hồ sơ ứng tuyển
+            </h5>
+
+            <div class="row g-3 text-center">
+                <div class="col-md-2 col-4">
+                    <div class="border rounded p-3">
+                        <div class="fs-4 fw-bold" th:text="${stats.total}">0</div>
+                        <div class="text-muted small">Tất cả</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="border rounded p-3">
+                        <div class="fs-4 fw-bold" th:text="${stats.applied}">0</div>
+                        <div class="text-muted small">Chờ duyệt</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="border rounded p-3">
+                        <div class="fs-4 fw-bold" th:text="${stats.interviewing}">0</div>
+                        <div class="text-muted small">Phỏng vấn</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="border rounded p-3">
+                        <div class="fs-4 fw-bold" th:text="${stats.hired}">0</div>
+                        <div class="text-muted small">Đã tuyển</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="border rounded p-3">
+                        <div class="fs-4 fw-bold" th:text="${stats.rejected}">0</div>
+                        <div class="text-muted small">Đã loại</div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-4">
+                    <div class="border rounded p-3">
+                        <div class="fs-4 fw-bold" th:text="${stats.withdrawn}">0</div>
+                        <div class="text-muted small">Đã rút</div>
+                    </div>
+                </div>
+            </div>
+
+            <a th:href="@{/hr/jobs/{id}/applications(id=${job.id})}"
+               class="btn btn-outline-primary mt-3">
+                <i class="bi bi-people me-1"></i>
+                <span th:text="'Hồ sơ (' + ${stats.total} + ')'">Hồ sơ (0)</span>
+            </a>
         </div>
     </div>
 

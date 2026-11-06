@@ -23,6 +23,26 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     /** Các vòng của một hồ sơ, theo thứ tự vòng. */
     List<Interview> findByApplicationIdOrderByRoundNoAsc(Long applicationId);
 
+    /**
+     * Đếm số vòng phỏng vấn của nhiều hồ sơ trong một truy vấn — SCR-12 (UC-15).
+     * Bổ sung read-only theo quyết định D1.
+     */
+    @Query("""
+            SELECT i.application.id AS applicationId, COUNT(i) AS total
+            FROM Interview i
+            WHERE i.application.id IN :applicationIds
+            GROUP BY i.application.id
+            """)
+    List<ApplicationInterviewCount> countGroupedByApplicationIds(
+            @Param("applicationIds") Collection<Long> applicationIds
+    );
+
+    interface ApplicationInterviewCount {
+        Long getApplicationId();
+
+        long getTotal();
+    }
+
     /** UC-21: các vòng của hồ sơ kèm người phỏng vấn, để hiện bảng ở SCR-17. */
     @EntityGraph(attributePaths = "interviewer")
     List<Interview> findWithInterviewerByApplicationIdOrderByRoundNoAsc(Long applicationId);

@@ -1,50 +1,37 @@
-
 package com.group3.rms.job.mapper;
 
 import com.group3.rms.job.dto.JobResponse;
 import com.group3.rms.job.dto.JobSummaryResponse;
 import com.group3.rms.job.entity.Job;
-import org.springframework.stereotype.Component;
+import com.group3.rms.job.entity.Skill;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Component
-public class JobMapper {
+@Mapper(componentModel = "spring")
+public interface JobMapper {
 
+    @Mapping(target = "departmentId", source = "department.id")
+    @Mapping(target = "departmentName", source = "department.name")
+    @Mapping(target = "ownerId", source = "owner.id")
+    @Mapping(target = "ownerName", source = "owner.fullName")
+    @Mapping(target = "skillIds", source = "skills")
+    JobResponse toResponse(Job job);
 
-    public JobSummaryResponse toSummary(Job job, long applicationCount) {
-        return new JobSummaryResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDepartment().getName(),
-                job.getOwner().getFullName(),
-                job.getStatus(),
-                job.getDeadline(),
-                applicationCount
-        );
+    @Mapping(target = "id", source = "job.id")
+    @Mapping(target = "title", source = "job.title")
+    @Mapping(target = "departmentName", source = "job.department.name")
+    @Mapping(target = "ownerId", source = "job.owner.id")
+    @Mapping(target = "ownerName", source = "job.owner.fullName")
+    @Mapping(target = "status", source = "job.status")
+    @Mapping(target = "deadline", source = "job.deadline")
+    @Mapping(target = "applicationCount", source = "applicationCount")
+    JobSummaryResponse toSummary(Job job, long applicationCount);
+
+    default String mapSkillName(Skill skill) {
+        return skill.getName();
     }
 
-
-
-    public JobResponse toResponse(Job job) {
-        return new JobResponse(
-                job.getId(),
-                job.getTitle(),
-                job.getDescription(),
-                job.getLocation(),
-                job.getSalaryMin(),
-                job.getSalaryMax(),
-                job.getDeadline(),
-                job.getStatus(),
-                job.getPublishedAt(),
-                job.getDepartment().getName(),
-                job.getOwner().getFullName(),
-                job.getSkills().stream()
-                        .map(skill -> skill.getName())
-                        .toList(),
-                job.getDepartment().getId(),
-                job.getSkills().stream()
-                        .map(skill -> skill.getId())
-                        .toList()
-        );
+    default Long mapSkillId(Skill skill) {
+        return skill.getId();
     }
-
 }
