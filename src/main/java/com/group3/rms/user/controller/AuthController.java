@@ -44,7 +44,14 @@ public class AuthController {
             if (loginError != null) {
                 model.addAttribute("errorMessage", loginError);
                 session.removeAttribute("loginError");
+            } else if (request.getParameter("error") != null) {
+                // Thông báo lỗi đã được đọc (hoặc không tồn tại) nhưng URL vẫn còn ?error
+                // → redirect về /login sạch để tránh URL kẹt khi người dùng refresh
+                return "redirect:/login";
             }
+        } else if (request.getParameter("error") != null) {
+            // Session không tồn tại (đã hết hạn) nhưng URL còn ?error → làm sạch
+            return "redirect:/login";
         }
 
         // Thông báo đăng xuất thành công
