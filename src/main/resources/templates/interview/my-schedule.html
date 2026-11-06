@@ -86,11 +86,9 @@
                         <td class="text-center" th:text="${item.roundNo}">1</td>
                         <td class="text-break" th:text="${item.location}">Phòng họp</td>
                         <td>
-                            <span th:if="${item.status.name() == 'EVALUATED'}" class="badge text-bg-success">
-                                Đã đánh giá
-                                <th:block th:if="${item.rating != null}" th:text="'· ' + ${item.rating} + '/5'"></th:block>
-                            </span>
-                            <span th:if="${item.status.name() == 'SCHEDULED'}" class="badge text-bg-primary">Đã lên lịch</span>
+                            <th:block th:replace="~{fragments/status-badge :: interview-status(${item.status})}"></th:block>
+                            <span th:if="${item.rating != null}" class="small text-muted ms-1"
+                                  th:text="${item.rating} + '/5'">4/5</span>
                             <!-- Hồ sơ đã kết thúc thì buổi chưa đánh giá không còn nhận đánh giá -->
                             <div th:if="${item.status.name() == 'SCHEDULED' and item.applicationStatus.name() != 'INTERVIEW'}"
                                  class="small text-muted mt-1">
