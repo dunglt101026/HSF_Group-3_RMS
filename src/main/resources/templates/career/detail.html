@@ -54,6 +54,25 @@
                     <i class="bi bi-lock me-1"></i>Vị trí này đã ngừng nhận hồ sơ.
                 </div>
             </div>
+
+            <!-- Nhân viên nội bộ không ứng tuyển được: đưa về đúng nơi làm việc của vai trò -->
+            <div th:if="${currentUser != null and currentUser.role.name() != 'CANDIDATE'}"
+                 th:switch="${currentUser.role.name()}" class="d-flex gap-2 flex-wrap mt-3">
+                <th:block th:case="'HR'">
+                    <a th:href="@{/hr/jobs/{id}(id=${job.id})}" class="btn btn-outline-primary">
+                        <i class="bi bi-briefcase me-1"></i>Quản lý tin này
+                    </a>
+                    <a th:href="@{/hr/jobs/{id}/applications(id=${job.id})}" class="btn btn-outline-secondary">
+                        <i class="bi bi-people me-1"></i>Hồ sơ ứng viên
+                    </a>
+                </th:block>
+                <a th:case="'INTERVIEWER'" th:href="@{/interviews/my}" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-check me-1"></i>Lịch phỏng vấn của tôi
+                </a>
+                <a th:case="'ADMIN'" th:href="@{/admin/users}" class="btn btn-outline-primary">
+                    <i class="bi bi-gear me-1"></i>Về trang quản trị
+                </a>
+            </div>
         </div>
     </div>
 
