@@ -1,6 +1,5 @@
 package com.group3.rms.user.dto;
 
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -27,11 +26,4 @@ public record RegisterRequest(
         @NotBlank(message = "Vui lòng xác nhận mật khẩu")
         String confirmPassword
 ) {
-    @AssertTrue(message = "Mật khẩu xác nhận không khớp.")
-    public boolean isPasswordConfirmed() {
-        if (password == null || confirmPassword == null) {
-            return true;
-        }
-        return password.equals(confirmPassword);
-    }
 }

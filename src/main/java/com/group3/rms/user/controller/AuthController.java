@@ -88,6 +88,12 @@ public class AuthController {
             Model model,
             RedirectAttributes ra
     ) {
+        if (form.password() != null && form.confirmPassword() != null
+                && !form.password().isBlank() && !form.confirmPassword().isBlank()
+                && !form.password().equals(form.confirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "Mismatch", "Mật khẩu xác nhận không khớp.");
+        }
+
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }

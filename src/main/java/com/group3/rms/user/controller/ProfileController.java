@@ -99,6 +99,12 @@ public class ProfileController {
             return "redirect:/login";
         }
 
+        if (form.newPassword() != null && form.confirmPassword() != null
+                && !form.newPassword().isBlank() && !form.confirmPassword().isBlank()
+                && !form.newPassword().equals(form.confirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "Mismatch", "Mật khẩu xác nhận không khớp.");
+        }
+
         if (bindingResult.hasErrors()) {
             return "profile/password";
         }
