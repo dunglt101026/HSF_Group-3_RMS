@@ -31,13 +31,13 @@
             <p class="text-muted mb-0" th:text="${job.title}"></p>
         </div>
 
-        <span th:if="${job.status.name() == 'DRAFT'}"
-              class="badge text-bg-secondary fs-6">Nháp</span>
-        <span th:if="${job.status.name() == 'ACTIVE'}"
-              class="badge text-bg-success fs-6">Đang tuyển</span>
-        <span th:if="${job.status.name() == 'CLOSED'}"
-              class="badge text-bg-dark fs-6">Đã đóng</span>
+        <span class="fs-6">
+            <th:block th:replace="~{fragments/status-badge :: job-status(${job.status})}"></th:block>
+        </span>
     </div>
+
+    <div th:if="${statusFilterError}" class="alert alert-warning" role="alert"
+         th:text="${statusFilterError}"></div>
 
     <div class="card">
         <div class="card-body">
@@ -114,16 +114,7 @@
                         </td>
 
                         <td>
-                            <span th:if="${item.status.name() == 'APPLIED'}"
-                                  class="badge text-bg-info">Chờ duyệt</span>
-                            <span th:if="${item.status.name() == 'INTERVIEW'}"
-                                  class="badge text-bg-primary">Phỏng vấn</span>
-                            <span th:if="${item.status.name() == 'HIRED'}"
-                                  class="badge text-bg-success">Đã tuyển</span>
-                            <span th:if="${item.status.name() == 'REJECTED'}"
-                                  class="badge text-bg-danger">Đã loại</span>
-                            <span th:if="${item.status.name() == 'WITHDRAWN'}"
-                                  class="badge text-bg-secondary">Đã rút</span>
+                            <th:block th:replace="~{fragments/status-badge :: application-status(${item.status})}"></th:block>
                         </td>
 
                         <td class="text-center" th:text="${item.interviewCount}"></td>

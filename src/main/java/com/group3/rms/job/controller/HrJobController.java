@@ -20,6 +20,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Locale;
 import java.util.Set;
 
 @Controller
@@ -35,11 +36,12 @@ public class HrJobController {
     @GetMapping
     public String listJobs(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) JobStatus status,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "true") boolean mine,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
+        JobStatus selectedStatus = parseStatus(status, JobStatus.class, model);
         CurrentUser currentUser = currentUserService.require();
         Long ownerId = mine ? currentUser.id() : null;
 
@@ -49,10 +51,10 @@ public class HrJobController {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        model.addAttribute("jobs", jobService.searchJobs(keyword, status, ownerId, pageable));
+        model.addAttribute("jobs", jobService.searchJobs(keyword, selectedStatus, ownerId, pageable));
         model.addAttribute("statusCounts", jobService.countJobsByStatus(keyword, ownerId));
         model.addAttribute("keyword", keyword);
-        model.addAttribute("selectedStatus", status);
+        model.addAttribute("selectedStatus", selectedStatus);
         model.addAttribute("mine", mine);
 
         return "job/list";
@@ -76,10 +78,11 @@ public class HrJobController {
     @GetMapping("/{id}/applications")
     public String jobApplications(
             @PathVariable Long id,
-            @RequestParam(required = false) ApplicationStatus status,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
+        ApplicationStatus selectedStatus = parseStatus(status, ApplicationStatus.class, model);
         Pageable pageable = PageRequest.of(
                 Math.max(page, 0),
                 PAGE_SIZE,
@@ -88,8 +91,8 @@ public class HrJobController {
 
         model.addAttribute("job", jobService.getJobDetail(id));
         model.addAttribute("stats", jobService.getApplicationStats(id));
-        model.addAttribute("applications", jobService.searchApplications(id, status, pageable));
-        model.addAttribute("selectedStatus", status);
+        model.addAttribute("applications", jobService.searchApplications(id, selectedStatus, pageable));
+        model.addAttribute("selectedStatus", selectedStatus);
 
         return "job/applications";
     }
@@ -219,5 +222,18 @@ public class HrJobController {
                 job.departmentId(),
                 Set.copyOf(job.skillIds())
         );
+    }
+
+    private <T extends Enum<T>> T parseStatus(String value, Class<T> statusType, Model model) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Enum.valueOf(statusType, value.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ignored) {
+            model.addAttribute("statusFilterError", "Trạng thái lọc không hợp lệ; đã bỏ qua bộ lọc.");
+            return null;
+        }
     }
 }
