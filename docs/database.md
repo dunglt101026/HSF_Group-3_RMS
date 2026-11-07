@@ -103,6 +103,7 @@ Cột audit (`created_at DATETIME2 NOT NULL`, `updated_at DATETIME2`, `created_b
 | [audit] | | | |
 
 Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần / tin.
+Chỉ mục: `(job_id, status)` cho đếm / lọc hồ sơ theo tin; `(candidate_id)` cho danh sách hồ sơ của ứng viên.
 
 ### interviews — Các vòng phỏng vấn, kèm đánh giá
 
@@ -120,6 +121,9 @@ Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần /
 | evaluated_at | DATETIME2 | | |
 | [audit] | | | |
 
+Ràng buộc: `UNIQUE (application_id, round_no)` — mỗi hồ sơ một vòng cho mỗi số vòng.
+Chỉ mục: `(interviewer_id, status, scheduled_at)` cho màn lịch phỏng vấn của tôi.
+
 ### audit_logs — Nhật ký hoạt động (chỉ thêm, không sửa)
 
 | Cột | Kiểu | Ràng buộc | Ghi chú |
@@ -131,6 +135,8 @@ Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần /
 | target_id | BIGINT | | |
 | detail | NVARCHAR(500) | | Mô tả ngắn |
 | created_at | DATETIME2 | NOT NULL | |
+
+Chỉ mục: `(created_at)` cho màn nhật ký (mới nhất trước, lọc theo ngày).
 
 ## 3. Hành động được ghi nhật ký (`AuditAction`)
 
@@ -151,10 +157,10 @@ Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần /
 
 Đủ để mỗi thành viên làm việc độc lập, không chờ màn hình của người khác:
 
-- 4 vai trò; 1 Admin, 2 HR, 2 Interviewer, 4 Candidate (mật khẩu chung cho môi trường dev, ghi ở đầu file `seed.sql`).
-- 3 phòng ban, 10 kỹ năng.
-- 6 tin: 2 `DRAFT`, 3 `ACTIVE` (của cả 2 HR), 1 `CLOSED`.
-- 10 hồ sơ phủ đủ 5 trạng thái.
+- 4 vai trò; 1 Admin, 2 HR, 2 Interviewer, 7 Candidate (họ tên, email, số điện thoại khớp CV mẫu) (mật khẩu chung cho môi trường dev, ghi ở đầu file `seed.sql`).
+- 4 phòng ban, 12 kỹ năng.
+- 6 tin: 1 `DRAFT`, 4 `ACTIVE` (của cả 2 HR), 1 `CLOSED`.
+- 8 hồ sơ phủ đủ 5 trạng thái; mỗi hồ sơ gắn một CV PDF thật trong `src/main/resources/static/sample/cv` (đường dẫn `seed/<tên file>`, `LocalFileStorageService` tự đọc từ đó nên tải CV được ngay).
 - Lịch phỏng vấn: vài buổi đã qua giờ chưa đánh giá (để demo UC-25), vài buổi sắp tới, vài buổi đã đánh giá.
 - **Không** đặt `CHECK` kiểu "ngày phải ở tương lai" trong DB — quy tắc đó kiểm tra ở service, nếu không dữ liệu mẫu quá khứ sẽ không nạp được.
 
@@ -165,7 +171,7 @@ Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần /
 | `admin` | ADMIN |
 | `hr1`, `hr2` | HR |
 | `interviewer1`, `interviewer2` | INTERVIEWER |
-| `candidate1` … `candidate4` | CANDIDATE |
+| `candidate1` … `candidate7` | CANDIDATE |
 
 Đầu file `seed.sql` có mô tả kịch bản demo sẵn (buổi phỏng vấn nào đang chờ đánh giá, buổi nào sắp tới…).
 

@@ -8,9 +8,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +22,12 @@ import java.time.LocalDateTime;
 
 /** Một vòng phỏng vấn của hồ sơ, kèm đánh giá (rating, feedback) khi đã EVALUATED. */
 @Entity
-@Table(name = "interviews")
+@Table(name = "interviews",
+        // Mỗi hồ sơ chỉ có một vòng cho mỗi số vòng (DB chặn nếu hai lần lưu đồng thời lọt qua khóa ở service).
+        uniqueConstraints = @UniqueConstraint(name = "uq_interviews_application_round",
+                columnNames = {"application_id", "round_no"}),
+        indexes = @Index(name = "ix_interviews_interviewer_status_time",
+                columnList = "interviewer_id, status, scheduled_at"))
 @Getter
 @Setter
 @NoArgsConstructor

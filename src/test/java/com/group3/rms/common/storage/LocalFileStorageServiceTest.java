@@ -93,4 +93,17 @@ class LocalFileStorageServiceTest {
             Files.deleteIfExists(outside);
         }
     }
+
+    @Test
+    @DisplayName("CV mẫu của seed.sql ('seed/...') đọc được từ thư mục CV mẫu, không cần chép vào uploads")
+    void loadSampleCvOfSeedData() {
+        assertThat(service.load("seed/sample_cv_java_backend.pdf").exists()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Đường dẫn 'seed/' không có file hoặc đi lên thư mục khác → không đọc được")
+    void sampleCvRejectsMissingOrTraversal() {
+        assertThatThrownBy(() -> service.load("seed/khong-co.pdf")).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> service.load("seed/../application.properties")).isInstanceOf(BusinessException.class);
+    }
 }
