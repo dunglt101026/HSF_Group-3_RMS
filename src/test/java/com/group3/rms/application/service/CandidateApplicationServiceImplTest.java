@@ -2,6 +2,7 @@ package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationCreateRequest;
 import com.group3.rms.application.dto.ApplyFormResponse;
+import com.group3.rms.application.dto.CvFileResponse;
 import com.group3.rms.application.dto.MyApplicationListResponse;
 import com.group3.rms.application.dto.UpcomingInterviewResponse;
 import com.group3.rms.application.entity.Application;
@@ -32,6 +33,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -383,6 +386,62 @@ class CandidateApplicationServiceImplTest {
             assertThatThrownBy(() -> service.withdraw(1L)).isInstanceOf(BusinessException.class);
             assertThat(app.getStatus()).isEqualTo(ApplicationStatus.HIRED);
             verify(auditLogService, never()).log(any(), any(), anyLong(), anyString());
+        }
+    }
+
+    @Nested
+    @DisplayName("Xem lại CV đã nộp")
+    class MyCv {
+
+        @BeforeEach
+        void login() {
+            loginAsCandidate();
+        }
+
+        @Test
+        @DisplayName("Hồ sơ của mình → trả file và tên file gốc")
+        void ownCv() {
+            Application app = application(1L, ApplicationStatus.WITHDRAWN);
+            Resource file = new ByteArrayResource(new byte[]{1});
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(app));
+            when(fileStorageService.load(app.getCvPath())).thenReturn(file);
+
+            CvFileResponse cv = service.getMyCv(1L);
+
+            assertThat(cv.file()).isSameAs(file);
+            assertThat(cv.fileName()).isEqualTo("NguyenVanAn_CV.pdf");
+        }
+
+        @Test
+        @DisplayName("Hồ sơ của người khác → 403, không đọc file")
+        void otherCandidate() {
+            Application app = application(1L, ApplicationStatus.APPLIED);
+            app.setCandidate(user(OTHER_CANDIDATE_ID, "Người khác"));
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(app));
+
+            assertThatThrownBy(() -> service.getMyCv(1L)).isInstanceOf(ForbiddenException.class);
+            verify(fileStorageService, never()).load(any());
+        }
+
+        @Test
+        @DisplayName("Hồ sơ không tồn tại → 404")
+        void notFound() {
+            when(applicationRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.getMyCv(99L)).isInstanceOf(NotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("File không còn trên máy chủ → báo lỗi")
+        void missingFile() {
+            Application app = application(1L, ApplicationStatus.APPLIED);
+            when(applicationRepository.findById(1L)).thenReturn(Optional.of(app));
+            when(fileStorageService.load(app.getCvPath()))
+                    .thenThrow(new BusinessException("File CV không còn trên máy chủ."));
+
+            assertThatThrownBy(() -> service.getMyCv(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage("File CV không còn trên máy chủ.");
         }
     }
 }
