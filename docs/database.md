@@ -103,6 +103,7 @@ Cột audit (`created_at DATETIME2 NOT NULL`, `updated_at DATETIME2`, `created_b
 | [audit] | | | |
 
 Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần / tin.
+Chỉ mục: `(job_id, status)` cho đếm / lọc hồ sơ theo tin; `(candidate_id)` cho danh sách hồ sơ của ứng viên.
 
 ### interviews — Các vòng phỏng vấn, kèm đánh giá
 
@@ -120,6 +121,9 @@ Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần /
 | evaluated_at | DATETIME2 | | |
 | [audit] | | | |
 
+Ràng buộc: `UNIQUE (application_id, round_no)` — mỗi hồ sơ một vòng cho mỗi số vòng.
+Chỉ mục: `(interviewer_id, status, scheduled_at)` cho màn lịch phỏng vấn của tôi.
+
 ### audit_logs — Nhật ký hoạt động (chỉ thêm, không sửa)
 
 | Cột | Kiểu | Ràng buộc | Ghi chú |
@@ -131,6 +135,8 @@ Ràng buộc: `UNIQUE (job_id, candidate_id)` — mỗi người nộp 1 lần /
 | target_id | BIGINT | | |
 | detail | NVARCHAR(500) | | Mô tả ngắn |
 | created_at | DATETIME2 | NOT NULL | |
+
+Chỉ mục: `(created_at)` cho màn nhật ký (mới nhất trước, lọc theo ngày).
 
 ## 3. Hành động được ghi nhật ký (`AuditAction`)
 

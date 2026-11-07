@@ -8,6 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,7 +23,13 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "applications",
         uniqueConstraints = @UniqueConstraint(name = "uq_applications_job_candidate",
-                columnNames = {"job_id", "candidate_id"}))
+                columnNames = {"job_id", "candidate_id"}),
+        indexes = {
+                // Đếm / lọc hồ sơ theo tin và trạng thái (SCR-09, SCR-11, SCR-12).
+                @Index(name = "ix_applications_job_status", columnList = "job_id, status"),
+                // Danh sách hồ sơ của một ứng viên (SCR-16).
+                @Index(name = "ix_applications_candidate", columnList = "candidate_id")
+        })
 @Getter
 @Setter
 @NoArgsConstructor
