@@ -5,6 +5,6 @@ import jakarta.validation.constraints.Pattern;
 
 public record AdminUserRoleUpdateRequest(
         @NotBlank(message = "Chỉ được đổi vai trò giữa HR và INTERVIEWER.")
-        @Pattern(regexp = "HR|INTERVIEWER", message = "Chỉ được đổi vai trò giữa HR và INTERVIEWER.")
+        @Pattern(regexp = "^$|HR|INTERVIEWER", message = "Chỉ được đổi vai trò giữa HR và INTERVIEWER.")
         String role
 ) {}
