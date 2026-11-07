@@ -44,7 +44,9 @@ public class UserSessionSyncFilter extends OncePerRequestFilter {
             String contextPath = request.getContextPath();
             String path = uri.substring(contextPath.length());
 
-            Optional<User> optionalUser = userRepository.findById(userDetails.id());
+            // Dùng findWithRolesById để eager-load roles trong 1 truy vấn,
+            // tránh LazyInitializationException khi truy cập roles ngoài transaction.
+            Optional<User> optionalUser = userRepository.findWithRolesById(userDetails.id());
 
             // 1. Kiểm tra tài khoản bị xóa hoặc bị khóa (UC-08)
             if (optionalUser.isEmpty() || optionalUser.get().getStatus() != UserStatus.ACTIVE) {
