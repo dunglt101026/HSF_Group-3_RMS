@@ -3,6 +3,7 @@ package com.group3.rms.common.storage;
 import com.group3.rms.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,9 @@ public class LocalFileStorageService implements FileStorageService {
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "doc", "docx");
     private static final long MAX_SIZE_BYTES = 5L * 1024 * 1024;
     private static final String CV_FIELD = "cvFile";
+    /** CV của dữ liệu mẫu (database/seed.sql) có đường dẫn "seed/<tên file>", đọc từ thư mục CV mẫu trong classpath. */
+    private static final String SAMPLE_PREFIX = "seed/";
+    private static final String SAMPLE_CLASSPATH_DIR = "static/sample/cv/";
 
     private final Path rootDir;
 
@@ -61,10 +65,27 @@ public class LocalFileStorageService implements FileStorageService {
     @Override
     public Resource load(String cvPath) {
         Path path = resolveInsideRoot(cvPath);
-        if (path == null || !Files.isRegularFile(path)) {
-            throw new BusinessException("File CV không còn trên máy chủ.");
+        if (path != null && Files.isRegularFile(path)) {
+            return new FileSystemResource(path);
         }
-        return new FileSystemResource(path);
+        Resource sample = loadSampleCv(cvPath);
+        if (sample != null) {
+            return sample;
+        }
+        throw new BusinessException("File CV không còn trên máy chủ.");
+    }
+
+    /** Chỉ nhận tên file đơn giản sau "seed/", không cho đi lên thư mục khác. */
+    private Resource loadSampleCv(String cvPath) {
+        if (cvPath == null || !cvPath.startsWith(SAMPLE_PREFIX)) {
+            return null;
+        }
+        String name = cvPath.substring(SAMPLE_PREFIX.length());
+        if (name.isBlank() || name.contains("/") || name.contains("\\") || name.contains("..")) {
+            return null;
+        }
+        Resource resource = new ClassPathResource(SAMPLE_CLASSPATH_DIR + name);
+        return resource.exists() ? resource : null;
     }
 
     @Override
