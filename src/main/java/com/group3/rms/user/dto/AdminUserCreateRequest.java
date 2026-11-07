@@ -25,7 +25,7 @@ public record AdminUserCreateRequest(
         String phone,
 
         @NotBlank(message = "Chỉ được tạo tài khoản HR hoặc INTERVIEWER.")
-        @Pattern(regexp = "HR|INTERVIEWER", message = "Chỉ được tạo tài khoản HR hoặc INTERVIEWER.")
+        @Pattern(regexp = "^$|HR|INTERVIEWER", message = "Chỉ được tạo tài khoản HR hoặc INTERVIEWER.")
         String role,
 
         @NotBlank(message = "Vui lòng nhập mật khẩu")
@@ -37,5 +37,6 @@ public record AdminUserCreateRequest(
         username = username == null ? null : username.trim();
         email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
         phone = phone == null || phone.isBlank() ? null : phone.trim();
+        role = role == null ? null : role.trim();
     }
 }
