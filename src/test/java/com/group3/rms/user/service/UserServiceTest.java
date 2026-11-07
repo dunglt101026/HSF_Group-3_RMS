@@ -1,8 +1,10 @@
 package com.group3.rms.user.service;
 
 import com.group3.rms.audit.entity.AuditAction;
+import com.group3.rms.audit.entity.AuditLog;
 import com.group3.rms.audit.entity.TargetType;
-import com.group3.rms.audit.service.AuditLogService;
+import com.group3.rms.audit.repository.AuditLogRepository;
+import com.group3.rms.audit.service.AuditLogServiceImpl;
 import com.group3.rms.common.exception.BusinessException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
@@ -21,6 +23,7 @@ import com.group3.rms.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -30,6 +33,8 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 class UserServiceTest {
 
@@ -38,7 +43,7 @@ class UserServiceTest {
     private PasswordEncoder fakePasswordEncoder;
     private UserMapper fakeUserMapper;
     private FakeCurrentUserService fakeCurrentUserService;
-    private FakeAuditLogService fakeAuditLogService;
+    private AuditLogRepository auditLogRepository;
     private UserServiceImpl userService;
 
     private User existingUser;
@@ -65,21 +70,6 @@ class UserServiceTest {
         @Override
         public void clear() {
             this.current = null;
-        }
-    }
-
-    static class FakeAuditLogService implements AuditLogService {
-        AuditAction lastAction;
-        TargetType lastTargetType;
-        Long lastTargetId;
-        String lastDetail;
-
-        @Override
-        public void log(AuditAction action, TargetType targetType, Long targetId, String detail) {
-            this.lastAction = action;
-            this.lastTargetType = targetType;
-            this.lastTargetId = targetId;
-            this.lastDetail = detail;
         }
     }
 
@@ -180,7 +170,7 @@ class UserServiceTest {
         );
 
         fakeCurrentUserService = new FakeCurrentUserService();
-        fakeAuditLogService = new FakeAuditLogService();
+        auditLogRepository = mock(AuditLogRepository.class);
 
         userService = new UserServiceImpl(
                 fakeUserRepository,
@@ -188,7 +178,7 @@ class UserServiceTest {
                 fakePasswordEncoder,
                 fakeUserMapper,
                 fakeCurrentUserService,
-                fakeAuditLogService
+                new AuditLogServiceImpl(auditLogRepository, fakeCurrentUserService)
         );
     }
 
@@ -288,10 +278,14 @@ class UserServiceTest {
         assertThat(response.role()).isEqualTo(RoleCode.CANDIDATE);
         assertThat(response.status()).isEqualTo(UserStatus.ACTIVE);
 
-        // Kiểm tra đã ghi audit log
-        assertThat(fakeAuditLogService.lastAction).isEqualTo(AuditAction.REGISTER);
-        assertThat(fakeAuditLogService.lastTargetType).isEqualTo(TargetType.USER);
-        assertThat(fakeAuditLogService.lastTargetId).isEqualTo(100L);
+        var auditLogCaptor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogRepository).save(auditLogCaptor.capture());
+        AuditLog auditLog = auditLogCaptor.getValue();
+        assertThat(auditLog.getActor()).isEqualTo("candidate_new");
+        assertThat(auditLog.getAction()).isEqualTo(AuditAction.REGISTER);
+        assertThat(auditLog.getTargetType()).isEqualTo(TargetType.USER);
+        assertThat(auditLog.getTargetId()).isEqualTo(100L);
+        assertThat(fakeCurrentUserService.get()).isEmpty();
     }
 
     @Test

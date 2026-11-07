@@ -59,7 +59,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         requireActiveAdmin();
 
         String keywordPattern = createKeywordPattern(keyword);
-        RoleCode roleFilter = parseRole(role);
+        RoleCode roleFilter = parseRole(role, "Vai trò lọc không hợp lệ. Vui lòng chọn lại vai trò.");
         UserStatus statusFilter = parseStatus(status);
         int pageNumber = parsePage(page);
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt", "id");
@@ -113,8 +113,10 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (request == null) {
             throw new BusinessException("Vui lòng nhập thông tin tài khoản.");
         }
-        if (!"HR".equals(request.role()) && !"INTERVIEWER".equals(request.role())) {
-            throw new BusinessException("role", "Chỉ được tạo tài khoản HR hoặc INTERVIEWER.");
+        String invalidRoleMessage = "Chỉ được tạo tài khoản HR hoặc INTERVIEWER.";
+        RoleCode roleCode = parseRole(request.role(), invalidRoleMessage);
+        if (!isAssignableRole(roleCode)) {
+            throw new BusinessException("role", invalidRoleMessage);
         }
 
         Set<ConstraintViolation<AdminUserCreateRequest>> violations = validator.validate(request);
@@ -124,7 +126,6 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         checkAccountAvailability(request.username(), request.email());
 
-        RoleCode roleCode = RoleCode.valueOf(request.role());
         Role role = roleRepository.findByCode(roleCode)
                 .orElseThrow(() -> new BusinessException("role", "Hệ thống chưa thiết lập vai trò " + roleCode + "."));
 
@@ -230,13 +231,12 @@ public class AdminUserServiceImpl implements AdminUserService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
         RoleCode oldRole = getSingleRole(user);
 
-        if ((oldRole != RoleCode.HR && oldRole != RoleCode.INTERVIEWER)
-                || request == null
-                || (!"HR".equals(request.role()) && !"INTERVIEWER".equals(request.role()))) {
-            throw new BusinessException("role", "Chỉ được đổi vai trò giữa HR và INTERVIEWER.");
+        String invalidRoleMessage = "Chỉ được đổi vai trò giữa HR và INTERVIEWER.";
+        RoleCode newRole = parseRole(request == null ? null : request.role(), invalidRoleMessage);
+        if (!isAssignableRole(oldRole) || !isAssignableRole(newRole)) {
+            throw new BusinessException("role", invalidRoleMessage);
         }
 
-        RoleCode newRole = RoleCode.valueOf(request.role());
         if (oldRole == newRole) {
             return false;
         }
@@ -331,7 +331,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         return "%" + value + "%";
     }
 
-    private RoleCode parseRole(String role) {
+    private boolean isAssignableRole(RoleCode role) {
+        return role == RoleCode.HR || role == RoleCode.INTERVIEWER;
+    }
+
+    private RoleCode parseRole(String role, String invalidRoleMessage) {
         if (role == null || role.isBlank()) {
             return null;
         }
@@ -339,7 +343,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         try {
             return RoleCode.valueOf(role);
         } catch (IllegalArgumentException e) {
-            throw new BusinessException("role", "Vai trò lọc không hợp lệ. Vui lòng chọn lại vai trò.");
+            throw new BusinessException("role", invalidRoleMessage);
         }
     }
 

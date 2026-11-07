@@ -10,6 +10,7 @@ import com.group3.rms.common.exception.NotFoundException;
 import com.group3.rms.common.security.CurrentUser;
 import com.group3.rms.common.security.CurrentUserService;
 import com.group3.rms.job.entity.JobStatus;
+import com.group3.rms.user.dto.AdminUserCreateRequest;
 import com.group3.rms.user.dto.AdminUserRoleUpdateRequest;
 import com.group3.rms.user.dto.AdminUserSummaryResponse;
 import com.group3.rms.user.entity.Role;
@@ -171,6 +172,24 @@ class AdminUserServiceImplTest {
         service.checkAdminAccess();
         service.checkCreatePermission();
 
+        verifyNoInteractions(roleRepository, passwordEncoder, auditLogService, validator);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"ADMIN", "CANDIDATE", "hr", "UNKNOWN"})
+    void rejectsInvalidRoleWhenCreatingAnAccount(String role) {
+        loginAsAdmin();
+        var request = new AdminUserCreateRequest("Nguyễn Văn An", "staff01", "staff01@example.com",
+                "0901234567", role, "Test@123");
+
+        assertThatExceptionOfType(BusinessException.class)
+                .isThrownBy(() -> service.createUser(request))
+                .withMessage("Chỉ được tạo tài khoản HR hoặc INTERVIEWER.")
+                .satisfies(error -> assertThat(error.getField()).isEqualTo("role"));
+
+        verify(adminUserRepository).findById(ADMIN_ID);
+        verifyNoMoreInteractions(adminUserRepository);
         verifyNoInteractions(roleRepository, passwordEncoder, auditLogService, validator);
     }
 
@@ -535,6 +554,7 @@ class AdminUserServiceImplTest {
 
             assertThatExceptionOfType(BusinessException.class)
                     .isThrownBy(() -> service.changeUserRole(USER_ID, new AdminUserRoleUpdateRequest(destination)))
+                    .withMessage("Chỉ được đổi vai trò giữa HR và INTERVIEWER.")
                     .satisfies(error -> assertThat(error.getField()).isEqualTo("role"));
 
             assertThat(target.getRoles()).extracting(Role::getCode).containsExactly(RoleCode.HR);
