@@ -27,6 +27,9 @@
                 <li class="breadcrumb-item">
                     <a th:href="@{/hr/jobs/{id}(id=${app.jobId})}" th:text="${app.jobTitle}">Tin</a>
                 </li>
+                <li class="breadcrumb-item">
+                    <a th:href="@{/hr/jobs/{id}/applications(id=${app.jobId})}">Hồ sơ ứng viên</a>
+                </li>
             </th:block>
             <li th:unless="${app.actions.hrViewer}" class="breadcrumb-item">
                 <a th:href="@{/interviews/my}">Lịch phỏng vấn của tôi</a>

@@ -101,12 +101,16 @@
                         <th>Ngày nộp</th>
                         <th>Trạng thái</th>
                         <th class="text-center">Số vòng phỏng vấn</th>
+                        <th class="text-end">Thao tác</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     <tr th:each="item : ${applications.content}">
-                        <td class="fw-semibold" th:text="${item.candidateName}"></td>
+                        <td class="fw-semibold">
+                            <a th:href="@{/applications/{id}(id=${item.id})}"
+                               class="text-decoration-none" th:text="${item.candidateName}"></a>
+                        </td>
 
                         <td th:text="${item.appliedAt != null
                                 ? #temporals.format(item.appliedAt, 'dd/MM/yyyy HH:mm')
@@ -127,10 +131,22 @@
                         </td>
 
                         <td class="text-center" th:text="${item.interviewCount}"></td>
+
+                        <!-- UC-21, UC-22: sang chi tiết hồ sơ để duyệt / loại / lên lịch / tuyển -->
+                        <td class="text-end text-nowrap">
+                            <a th:href="@{/applications/{id}(id=${item.id})}"
+                               class="btn btn-sm"
+                               th:classappend="${item.status.name() == 'APPLIED' or item.status.name() == 'INTERVIEW'}
+                                               ? 'btn-primary' : 'btn-outline-secondary'">
+                                <i class="bi bi-person-vcard me-1"></i>
+                                <span th:text="${item.status.name() == 'APPLIED' or item.status.name() == 'INTERVIEW'}
+                                               ? 'Xử lý' : 'Xem'">Xem</span>
+                            </a>
+                        </td>
                     </tr>
 
                     <tr th:if="${applications.empty}">
-                        <td colspan="4" class="text-center py-5">
+                        <td colspan="5" class="text-center py-5">
                             <i class="bi bi-inbox fs-1 text-muted"></i>
                             <p class="text-muted mt-2 mb-0">
                                 Chưa có ứng viên ở trạng thái này.
