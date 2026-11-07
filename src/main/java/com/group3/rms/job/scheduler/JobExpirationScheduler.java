@@ -53,7 +53,7 @@ public class JobExpirationScheduler {
                     AuditAction.CLOSE_JOB,
                     TargetType.JOB,
                     job.getId(),
-                    "System automatically closed expired job: "
+                    "Hệ thống tự động đóng tin tuyển dụng quá hạn: "
                             + job.getTitle()
             );
         }

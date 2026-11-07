@@ -1,7 +1,6 @@
 package com.group3.rms.job.dto;
 
 import com.group3.rms.application.entity.ApplicationStatus;
-import com.group3.rms.application.entity.Application;
 
 import java.time.LocalDateTime;
 
@@ -12,15 +11,4 @@ public record JobApplicationRowResponse(
         LocalDateTime appliedAt,
         ApplicationStatus status,
         long interviewCount
-) {
-
-    public static JobApplicationRowResponse from(Application application, long interviewCount) {
-        return new JobApplicationRowResponse(
-                application.getId(),
-                application.getCandidate().getFullName(),
-                application.getCreatedAt(),
-                application.getStatus(),
-                interviewCount
-        );
-    }
-}
+) {}

@@ -25,6 +25,7 @@ import com.group3.rms.job.entity.Job;
 import com.group3.rms.job.entity.JobStatus;
 import com.group3.rms.job.entity.Skill;
 import com.group3.rms.job.mapper.JobMapper;
+import com.group3.rms.job.mapper.JobApplicationRowMapper;
 import com.group3.rms.job.repository.DepartmentRepository;
 import com.group3.rms.job.repository.JobRepository;
 import com.group3.rms.job.repository.SkillRepository;
@@ -67,6 +68,7 @@ public class JobServiceImpl implements JobService {
     private final SkillRepository skillRepository;
     private final UserRepository userRepository;
     private final JobMapper jobMapper;
+    private final JobApplicationRowMapper jobApplicationRowMapper;
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
 
@@ -374,7 +376,7 @@ public class JobServiceImpl implements JobService {
                 page.getContent().stream().map(Application::getId).toList()
         );
 
-        return page.map(application -> JobApplicationRowResponse.from(
+        return page.map(application -> jobApplicationRowMapper.toRow(
                 application,
                 interviewCounts.getOrDefault(application.getId(), 0L)
         ));
