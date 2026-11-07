@@ -87,7 +87,8 @@
             <!-- Nút Đầu -->
             <li class="page-item" th:classappend="${page.first} ? 'disabled'">
                 <a class="page-link"
-                   th:href="@{${baseUrl}(page=0)}"
+                   th:href="${page.first} ? null : @{${baseUrl}(page=0)}"
+                   th:aria-disabled="${page.first} ? 'true' : null"
                    data-page="0"
                    title="Trang đầu">
                     <i class="bi bi-chevron-double-left"></i>
@@ -97,7 +98,8 @@
             <!-- Nút Trước -->
             <li class="page-item" th:classappend="${page.first} ? 'disabled'">
                 <a class="page-link"
-                   th:href="@{${baseUrl}(page=${page.number - 1})}"
+                   th:href="${page.first} ? null : @{${baseUrl}(page=${page.number - 1})}"
+                   th:aria-disabled="${page.first} ? 'true' : null"
                    th:attr="data-page=${page.number - 1}"
                    title="Trang trước">
                     <i class="bi bi-chevron-left"></i>
@@ -111,6 +113,7 @@
                     th:classappend="${i == page.number} ? 'active'">
                     <a class="page-link"
                        th:href="@{${baseUrl}(page=${i})}"
+                       th:aria-current="${i == page.number} ? 'page' : null"
                        th:attr="data-page=${i}"
                        th:text="${i + 1}">1</a>
                 </li>
@@ -119,7 +122,8 @@
             <!-- Nút Sau -->
             <li class="page-item" th:classappend="${page.last} ? 'disabled'">
                 <a class="page-link"
-                   th:href="@{${baseUrl}(page=${page.number + 1})}"
+                   th:href="${page.last} ? null : @{${baseUrl}(page=${page.number + 1})}"
+                   th:aria-disabled="${page.last} ? 'true' : null"
                    th:attr="data-page=${page.number + 1}"
                    title="Trang sau">
                     <i class="bi bi-chevron-right"></i>
@@ -129,7 +133,8 @@
             <!-- Nút Cuối -->
             <li class="page-item" th:classappend="${page.last} ? 'disabled'">
                 <a class="page-link"
-                   th:href="@{${baseUrl}(page=${page.totalPages - 1})}"
+                   th:href="${page.last} ? null : @{${baseUrl}(page=${page.totalPages - 1})}"
+                   th:aria-disabled="${page.last} ? 'true' : null"
                    th:attr="data-page=${page.totalPages - 1}"
                    title="Trang cuối">
                     <i class="bi bi-chevron-double-right"></i>

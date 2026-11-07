@@ -26,8 +26,6 @@ import java.net.URISyntaxException;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    private static final String DEFAULT_REDIRECT = "/";
-
     @ExceptionHandler(BusinessException.class)
     public ModelAndView handleBusiness(BusinessException e, HttpServletRequest request, RedirectAttributes attributes) {
         if (isApiRequest(request)) {
@@ -111,19 +109,19 @@ public class GlobalExceptionHandler {
     private String sameSiteReferer(HttpServletRequest request) {
         String referer = request.getHeader("Referer");
         if (referer == null || referer.isBlank()) {
-            return DEFAULT_REDIRECT;
+            return "/";
         }
 
         try {
             URI uri = new URI(referer);
             String scheme = uri.getScheme();
             if (!("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme))) {
-                return DEFAULT_REDIRECT;
+                return "/";
             }
             if (!request.getScheme().equalsIgnoreCase(scheme)
                     || !request.getServerName().equalsIgnoreCase(uri.getHost())
                     || uri.getRawUserInfo() != null) {
-                return DEFAULT_REDIRECT;
+                return "/";
             }
 
             int port = uri.getPort();
@@ -131,31 +129,31 @@ public class GlobalExceptionHandler {
                 port = "https".equalsIgnoreCase(scheme) ? 443 : 80;
             }
             if (port != request.getServerPort()) {
-                return DEFAULT_REDIRECT;
+                return "/";
             }
 
             String path = uri.getRawPath();
             String contextPath = request.getContextPath();
             if (path == null || !(path.equals(contextPath) || path.startsWith(contextPath + "/"))) {
-                return DEFAULT_REDIRECT;
+                return "/";
             }
 
             // Spring tự thêm context path khi xử lý redirect bắt đầu bằng "/".
             path = path.substring(contextPath.length());
             if (path.isEmpty() || path.equals("/")) {
-                return DEFAULT_REDIRECT;
+                return "/";
             }
             String decodedPath = new URI(path).getPath();
             if (!path.startsWith("/") || path.startsWith("//")
                     || decodedPath == null || !decodedPath.startsWith("/") || decodedPath.startsWith("//")
                     || decodedPath.contains("\\") || decodedPath.contains(";")
                     || decodedPath.chars().anyMatch(Character::isISOControl)) {
-                return DEFAULT_REDIRECT;
+                return "/";
             }
             // Chặn đường dẫn đi ra ngoài ứng dụng, kể cả khi dấu chấm được mã hóa.
             for (String part : decodedPath.split("/")) {
                 if (part.equals(".") || part.equals("..")) {
-                    return DEFAULT_REDIRECT;
+                    return "/";
                 }
             }
 
@@ -166,7 +164,7 @@ public class GlobalExceptionHandler {
             return path;
         } catch (URISyntaxException e) {
             // Referer sai định dạng thì về trang chủ.
-            return DEFAULT_REDIRECT;
+            return "/";
         }
     }
 }
