@@ -97,30 +97,11 @@
                 </table>
             </div>
 
-            <div class="card-body border-top d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <span class="text-muted small" th:text="|Tổng số: ${activityLogs.totalElements} bản ghi|">Tổng số: 0 bản ghi</span>
-                <nav aria-label="Phân trang nhật ký hoạt động">
-                    <ul class="pagination flex-wrap mb-0">
-                        <li class="page-item" th:classappend="${!activityLogs.hasPrevious()} ? 'disabled' : ''">
-                            <a th:if="${activityLogs.hasPrevious()}" class="page-link"
-                               th:href="@{/admin/activity-logs(action=${action},actor=${actor},fromDate=${fromDate},toDate=${toDate},page=${activityLogs.number - 1})}">
-                                Trước
-                            </a>
-                            <span th:unless="${activityLogs.hasPrevious()}" class="page-link" aria-disabled="true">Trước</span>
-                        </li>
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link"
-                                  th:text="|Trang ${activityLogs.totalPages == 0 ? 0 : activityLogs.number + 1} / ${activityLogs.totalPages}|">Trang 0 / 0</span>
-                        </li>
-                        <li class="page-item" th:classappend="${!activityLogs.hasNext()} ? 'disabled' : ''">
-                            <a th:if="${activityLogs.hasNext()}" class="page-link"
-                               th:href="@{/admin/activity-logs(action=${action},actor=${actor},fromDate=${fromDate},toDate=${toDate},page=${activityLogs.number + 1})}">
-                                Sau
-                            </a>
-                            <span th:unless="${activityLogs.hasNext()}" class="page-link" aria-disabled="true">Sau</span>
-                        </li>
-                    </ul>
-                </nav>
+            <div class="card-body border-top">
+                <span th:if="${activityLogs.totalPages <= 1}" class="text-muted small"
+                      th:text="|Tổng số: ${activityLogs.totalElements} bản ghi|">Tổng số: 0 bản ghi</span>
+                <div th:replace="~{fragments/pagination :: pagination(
+                        ${activityLogs}, @{~/admin/activity-logs(action=${action},actor=${actor},fromDate=${fromDate},toDate=${toDate})})}"></div>
             </div>
         </section>
     </div>
