@@ -2,6 +2,7 @@ package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationCreateRequest;
 import com.group3.rms.application.dto.ApplyFormResponse;
+import com.group3.rms.application.dto.CvFileResponse;
 import com.group3.rms.application.dto.MyApplicationListResponse;
 import com.group3.rms.application.entity.ApplicationStatus;
 
@@ -19,4 +20,7 @@ public interface CandidateApplicationService {
 
     /** UC-20: rút hồ sơ của chính mình, APPLIED / INTERVIEW → WITHDRAWN. */
     void withdraw(Long applicationId);
+
+    /** Bổ sung ngoài đặc tả: ứng viên xem lại CV đã nộp của chính mình. */
+    CvFileResponse getMyCv(Long applicationId);
 }

@@ -6,14 +6,6 @@
 
 <head>
     <title>Hồ sơ ứng tuyển của tôi</title>
-    <th:block layout:fragment="styles">
-        <style>
-            .badge-interview {
-                background: #6f42c1;
-                color: #fff;
-            }
-        </style>
-    </th:block>
 </head>
 
 <body>
@@ -85,12 +77,8 @@
                             </td>
                             <td class="text-nowrap"
                                 th:text="${#temporals.format(app.appliedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 09:00</td>
-                            <td th:switch="${app.status.name()}">
-                                <span th:case="'APPLIED'" class="badge text-bg-primary">Chờ duyệt</span>
-                                <span th:case="'INTERVIEW'" class="badge badge-interview">Phỏng vấn</span>
-                                <span th:case="'HIRED'" class="badge text-bg-success">Đã tuyển</span>
-                                <span th:case="'REJECTED'" class="badge text-bg-danger">Đã loại</span>
-                                <span th:case="'WITHDRAWN'" class="badge text-bg-secondary">Đã rút</span>
+                            <td>
+                                <th:block th:replace="~{fragments/status-badge :: application-status(${app.status})}"></th:block>
                             </td>
                             <td>
                                 <span th:if="${#lists.isEmpty(app.upcomingInterviews)}" class="text-muted">—</span>
@@ -101,13 +89,20 @@
                                 </div>
                             </td>
                             <td class="text-end text-nowrap">
-                                <form th:if="${app.canWithdraw()}"
-                                      th:action="@{/my/applications/{id}/withdraw(id=${app.id})}" method="post"
-                                      onsubmit="return confirm('Rút hồ sơ sẽ không thể nộp lại cho vị trí này. Bạn có chắc muốn rút?')">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-x-circle me-1"></i>Rút hồ sơ
-                                    </button>
-                                </form>
+                                <a th:href="@{/my/applications/{id}/cv(id=${app.id})}" target="_blank" rel="noopener"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-text me-1"></i>Xem CV
+                                </a>
+                                <!-- Xác nhận qua modal dùng chung (fragments/confirm-dialog); service vẫn kiểm tra lại -->
+                                <button th:if="${app.canWithdraw()}" type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal" data-bs-target="#rmsConfirmModal"
+                                        data-confirm-title="Rút hồ sơ"
+                                        data-confirm-message="Rút hồ sơ sẽ không thể nộp lại cho vị trí này. Bạn có chắc muốn rút?"
+                                        th:data-confirm-action="@{/my/applications/{id}/withdraw(id=${app.id})}"
+                                        data-confirm-btn="Rút hồ sơ"
+                                        data-confirm-class="btn-danger">
+                                    <i class="bi bi-x-circle me-1"></i>Rút hồ sơ
+                                </button>
                             </td>
                         </tr>
                         </tbody>
@@ -115,6 +110,8 @@
                 </div>
             </div>
         </div>
+
+        <div th:replace="~{fragments/confirm-dialog :: dynamic-modal}"></div>
     </th:block>
 
 </main>

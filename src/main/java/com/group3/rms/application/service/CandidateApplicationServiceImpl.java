@@ -2,6 +2,7 @@ package com.group3.rms.application.service;
 
 import com.group3.rms.application.dto.ApplicationCreateRequest;
 import com.group3.rms.application.dto.ApplyFormResponse;
+import com.group3.rms.application.dto.CvFileResponse;
 import com.group3.rms.application.dto.MyApplicationListResponse;
 import com.group3.rms.application.dto.MyApplicationResponse;
 import com.group3.rms.application.dto.UpcomingInterviewResponse;
@@ -135,9 +136,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         Application application = applicationRepository.findByIdForUpdate(applicationId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
 
-        if (!candidate.getId().equals(application.getCandidate().getId())) {
-            throw new ForbiddenException("Bạn không có quyền rút hồ sơ này.");
-        }
+        requireOwner(application, candidate);
 
         ApplicationStatus current = application.getStatus();
         if (current != ApplicationStatus.APPLIED && current != ApplicationStatus.INTERVIEW) {
@@ -151,6 +150,25 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         auditLogService.log(AuditAction.WITHDRAW, TargetType.APPLICATION, application.getId(),
                 "Hồ sơ #" + application.getId() + ": " + current + " → WITHDRAWN");
         log.info("{} rút hồ sơ #{}", candidate.getUsername(), application.getId());
+    }
+
+    // Bổ sung ngoài đặc tả: ứng viên xem lại CV đã nộp.
+    @Override
+    public CvFileResponse getMyCv(Long applicationId) {
+        User candidate = requireActiveCandidate();
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
+        requireOwner(application, candidate);
+
+        // File không còn trên máy chủ → BusinessException, quay về trang trước kèm thông báo.
+        return new CvFileResponse(fileStorageService.load(application.getCvPath()), application.getCvOriginalName());
+    }
+
+    /** Ứng viên chỉ thao tác trên hồ sơ của chính mình. */
+    private void requireOwner(Application application, User candidate) {
+        if (!candidate.getId().equals(application.getCandidate().getId())) {
+            throw new ForbiddenException("Bạn không có quyền với hồ sơ này.");
+        }
     }
 
     /** Kiểm tra bằng dữ liệu hiện tại, để tài khoản vừa bị khóa không thao tác tiếp bằng phiên cũ. */

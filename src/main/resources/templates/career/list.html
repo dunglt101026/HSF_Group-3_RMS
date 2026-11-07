@@ -93,21 +93,8 @@
     </div>
 
     <!-- Phân trang: giữ nguyên bộ lọc khi chuyển trang -->
-    <nav th:if="${jobs.totalPages > 1}" class="mt-4" aria-label="Phân trang việc làm">
-        <ul class="pagination justify-content-center mb-0">
-            <li class="page-item" th:classappend="${jobs.first} ? 'disabled'">
-                <a class="page-link"
-                   th:href="@{/jobs(keyword=${keyword},departmentId=${departmentId},location=${location},page=${jobs.number - 1})}">Trước</a>
-            </li>
-            <li class="page-item disabled">
-                <span class="page-link" th:text="${jobs.number + 1} + ' / ' + ${jobs.totalPages}">1 / 1</span>
-            </li>
-            <li class="page-item" th:classappend="${jobs.last} ? 'disabled'">
-                <a class="page-link"
-                   th:href="@{/jobs(keyword=${keyword},departmentId=${departmentId},location=${location},page=${jobs.number + 1})}">Sau</a>
-            </li>
-        </ul>
-    </nav>
+    <div th:replace="~{fragments/pagination :: pagination(
+            ${jobs}, @{~/jobs(keyword=${keyword},departmentId=${departmentId},location=${location})})}"></div>
 
 </main>
 </body>

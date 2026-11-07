@@ -58,7 +58,9 @@ public class PublicJobServiceImpl implements PublicJobService {
             spec = spec.and(JobSpecification.hasLocation(location));
         }
 
-        Pageable pageable = PageRequest.of(Math.max(page, 0), PAGE_SIZE,
+        // Giới hạn trên để page * PAGE_SIZE không tràn số khi truy vấn.
+        int safePage = Math.clamp(page, 0, Integer.MAX_VALUE / PAGE_SIZE);
+        Pageable pageable = PageRequest.of(safePage, PAGE_SIZE,
                 Sort.by(Sort.Direction.DESC, "publishedAt", "id"));
         return jobRepository.findAll(spec, pageable).map(publicJobMapper::toSummary);
     }

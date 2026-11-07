@@ -20,17 +20,33 @@ public class PublicJobController {
     @GetMapping
     public String listJobs(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String departmentId,
             @RequestParam(required = false) String location,
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) String page,
             Model model
     ) {
-        model.addAttribute("jobs", publicJobService.searchJobs(keyword, departmentId, location, page));
+        // Tham số trên URL bị sửa tay thành giá trị sai thì bỏ qua, thay vì trả trang lỗi.
+        Long department = parseNumber(departmentId);
+        Long pageNumber = parseNumber(page);
+        int safePage = pageNumber == null ? 0 : Math.clamp(pageNumber, 0, Integer.MAX_VALUE);
+
+        model.addAttribute("jobs", publicJobService.searchJobs(keyword, department, location, safePage));
         model.addAttribute("filters", publicJobService.getFilterOptions());
         model.addAttribute("keyword", keyword);
-        model.addAttribute("departmentId", departmentId);
+        model.addAttribute("departmentId", department);
         model.addAttribute("location", location);
         return "career/list";
+    }
+
+    private Long parseNumber(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     // SCR-14: Chi tiết việc làm (UC-17).
