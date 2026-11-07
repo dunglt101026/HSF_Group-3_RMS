@@ -64,7 +64,9 @@ public class GlobalExceptionHandler {
         }
 
         if (clientErrorStatus != null) {
-            if (isApiRequest(request)) {
+            if (isApiRequest(request)
+                    || clientErrorStatus.isSameCodeAs(HttpStatus.FORBIDDEN)
+                    || clientErrorStatus.isSameCodeAs(HttpStatus.NOT_FOUND)) {
                 return errorResponse(clientErrorStatus,
                         "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại dữ liệu gửi lên.", request);
             }

@@ -24,9 +24,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     @Override
     @Transactional
     public void log(AuditAction action, TargetType targetType, Long targetId, String detail) {
-        if (action == null) {
-            throw new IllegalArgumentException("Hành động ghi nhật ký không được để trống.");
-        }
+        validateAction(action);
 
         Optional<CurrentUser> currentUser = currentUserService.get();
         String actor = currentUser.map(CurrentUser::username).orElse(null);
@@ -34,7 +32,23 @@ public class AuditLogServiceImpl implements AuditLogService {
         if (currentUser.isEmpty()) {
             actor = "system";
         }
+        saveLog(actor, action, targetType, targetId, detail);
+    }
 
+    @Override
+    @Transactional
+    public void log(String actor, AuditAction action, TargetType targetType, Long targetId, String detail) {
+        validateAction(action);
+        saveLog(actor, action, targetType, targetId, detail);
+    }
+
+    private void validateAction(AuditAction action) {
+        if (action == null) {
+            throw new IllegalArgumentException("Hành động ghi nhật ký không được để trống.");
+        }
+    }
+
+    private void saveLog(String actor, AuditAction action, TargetType targetType, Long targetId, String detail) {
         if (actor == null || actor.isBlank()) {
             throw new IllegalArgumentException("Người thực hiện nhật ký không được để trống.");
         }

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,9 +36,11 @@ public class ApiExceptionHandler {
                 "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại các thông tin đã nhập.");
     }
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ProblemDetail handleForbidden(ForbiddenException e) {
-        return createProblem(HttpStatus.FORBIDDEN, e.getMessage());
+    @ExceptionHandler({ForbiddenException.class, AccessDeniedException.class})
+    public ProblemDetail handleForbidden(Exception e) {
+        String message = e instanceof ForbiddenException
+                ? e.getMessage() : "Bạn không có quyền truy cập trang hoặc thực hiện thao tác này.";
+        return createProblem(HttpStatus.FORBIDDEN, message);
     }
 
     @ExceptionHandler({NotFoundException.class, NoResourceFoundException.class, NoHandlerFoundException.class})

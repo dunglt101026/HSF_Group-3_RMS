@@ -113,8 +113,8 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        // Ghi nhật ký qua AuditLogService theo quy tắc bắt buộc
         auditLogService.log(
+                savedUser.getUsername(),
                 AuditAction.REGISTER,
                 TargetType.USER,
                 savedUser.getId(),
