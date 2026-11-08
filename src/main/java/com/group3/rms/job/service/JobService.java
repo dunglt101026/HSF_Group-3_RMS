@@ -22,12 +22,12 @@ public interface JobService {
             Pageable pageable
     );
 
-    /** Số lượng tin theo trạng thái cho các tab của SCR-09. */
+
     JobStatusCountsResponse countJobsByStatus(String keyword, Long ownerId);
 
     JobResponse getJobDetail(Long jobId);
 
-    /** Tin để mở form sửa: chỉ HR phụ trách, tin chưa đóng (UC-13). */
+
     JobResponse getJobForEdit(Long jobId);
 
     JobFormOptions getFormOptions();
@@ -42,10 +42,10 @@ public interface JobService {
 
     void deleteJob(Long jobId);
 
-    /** Số hồ sơ theo từng trạng thái của một tin (SCR-11, SCR-12). */
+
     JobApplicationStatsResponse getApplicationStats(Long jobId);
 
-    /** Danh sách hồ sơ ứng viên của một tin (UC-15). */
+
     Page<JobApplicationRowResponse> searchApplications(
             Long jobId,
             ApplicationStatus status,

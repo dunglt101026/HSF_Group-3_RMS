@@ -178,7 +178,7 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        // Cập nhật lại phiên người dùng hiện tại
+
         currentUserService.set(new CurrentUser(
                 savedUser.getId(),
                 savedUser.getUsername(),

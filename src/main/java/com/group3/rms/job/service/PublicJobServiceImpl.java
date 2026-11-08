@@ -41,10 +41,10 @@ public class PublicJobServiceImpl implements PublicJobService {
     private final PublicJobMapper publicJobMapper;
     private final CurrentUserService currentUserService;
 
-    // UC-16: Tìm kiếm việc làm.
+
     @Override
     public Page<PublicJobSummaryResponse> searchJobs(String keyword, Long departmentId, String location, int page) {
-        // Chỉ hiện tin ACTIVE, chưa bị xóa.
+
         Specification<Job> spec = JobSpecification.notDeleted()
                 .and(JobSpecification.hasStatus(JobStatus.ACTIVE));
 
@@ -58,7 +58,7 @@ public class PublicJobServiceImpl implements PublicJobService {
             spec = spec.and(JobSpecification.hasLocation(location));
         }
 
-        // Giới hạn trên để page * PAGE_SIZE không tràn số khi truy vấn.
+
         int safePage = Math.clamp(page, 0, Integer.MAX_VALUE / PAGE_SIZE);
         Pageable pageable = PageRequest.of(safePage, PAGE_SIZE,
                 Sort.by(Sort.Direction.DESC, "publishedAt", "id"));
@@ -75,7 +75,7 @@ public class PublicJobServiceImpl implements PublicJobService {
         );
     }
 
-    // UC-17: Xem chi tiết việc làm.
+
     @Override
     public PublicJobDetailResponse getJobDetail(Long jobId) {
         Job job = jobRepository.findByIdAndDeletedFalse(jobId)
@@ -101,7 +101,7 @@ public class PublicJobServiceImpl implements PublicJobService {
         return candidate ? ApplyState.CAN_APPLY : ApplyState.NOT_CANDIDATE;
     }
 
-    /** Tin quá hạn nhưng lịch 00:05 chưa kịp đóng cũng coi như đã ngừng nhận hồ sơ. */
+
     private boolean isOpen(Job job) {
         return job.getStatus() == JobStatus.ACTIVE && !job.getDeadline().isBefore(LocalDate.now());
     }

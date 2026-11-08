@@ -72,7 +72,7 @@ public class JobServiceImpl implements JobService {
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
 
-    // UC-11: danh sách tin (mặc định "Tin tôi phụ trách" do controller truyền ownerId).
+
     @Override
     public Page<JobSummaryResponse> searchJobs(
             String keyword,
@@ -85,7 +85,7 @@ public class JobServiceImpl implements JobService {
         Specification<Job> spec = buildJobSpecification(keyword, status, ownerId);
         Page<Job> jobs = jobRepository.findAll(spec, pageable);
 
-        // Một truy vấn cho cả trang, không đếm từng dòng (tránh N+1).
+
         Map<Long, Long> applicationCounts = countApplicationsByJob(
                 jobs.getContent().stream().map(Job::getId).toList()
         );
@@ -116,7 +116,7 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(findJob(jobId));
     }
 
-    // UC-13: form sửa chỉ mở cho HR phụ trách và tin chưa đóng.
+
     @Override
     public JobResponse getJobForEdit(Long jobId) {
         CurrentUser currentUser = requireHr();
@@ -141,7 +141,7 @@ public class JobServiceImpl implements JobService {
         );
     }
 
-    // UC-12: tạo tin ở trạng thái DRAFT.
+
     @Override
     @Transactional
     public JobResponse createJob(JobCreateRequest request) {
@@ -194,7 +194,7 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(savedJob);
     }
 
-    // UC-13: cập nhật tin DRAFT / ACTIVE của chính HR phụ trách.
+
     @Override
     @Transactional
     public JobResponse updateJob(Long jobId, JobUpdateRequest request) {
@@ -250,7 +250,7 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(updatedJob);
     }
 
-    // UC-14: DRAFT → ACTIVE.
+
     @Override
     @Transactional
     public JobResponse publishJob(Long jobId) {
@@ -284,7 +284,7 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(savedJob);
     }
 
-    // UC-14: ACTIVE → CLOSED, không mở lại được.
+
     @Override
     @Transactional
     public JobResponse closeJob(Long jobId) {
@@ -311,7 +311,7 @@ public class JobServiceImpl implements JobService {
         return jobMapper.toResponse(savedJob);
     }
 
-    // UC-14: xóa mềm, chỉ tin DRAFT chưa có hồ sơ.
+
     @Override
     @Transactional
     public void deleteJob(Long jobId) {
@@ -353,7 +353,7 @@ public class JobServiceImpl implements JobService {
         return JobApplicationStatsResponse.from(countApplicationsByStatus(jobId));
     }
 
-    // UC-15: mọi HR xem được hồ sơ của tin; mới nộp hiện trước.
+
     @Override
     public Page<JobApplicationRowResponse> searchApplications(
             Long jobId,
@@ -382,9 +382,9 @@ public class JobServiceImpl implements JobService {
         ));
     }
 
-    /* =====================================================================
-     * Truy vấn / kiểm tra dùng chung
-     * ===================================================================== */
+
+
+
 
     private Specification<Job> buildJobSpecification(String keyword, JobStatus status, Long ownerId) {
         Specification<Job> spec = JobSpecification.notDeleted();
@@ -459,7 +459,7 @@ public class JobServiceImpl implements JobService {
             );
         }
 
-        // Set.of(...) là immutable: contains(null) sẽ ném NPE, nên dò qua stream.
+
         if (skillIds.stream().anyMatch(Objects::isNull)) {
             throw new BusinessException(
                     "skillIds",

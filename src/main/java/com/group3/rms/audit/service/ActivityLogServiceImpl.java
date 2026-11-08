@@ -49,7 +49,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
         }
 
         LocalDateTime startTime = fromDateFilter == null ? null : fromDateFilter.atStartOfDay();
-        // DATETIME2 không có ngày sau 31/12/9999, nên ngày cuối này không cần cận trên.
+
         LocalDateTime endTime = toDateFilter == null || toDateFilter.equals(LocalDate.of(9999, 12, 31))
                 ? null : toDateFilter.plusDays(1).atStartOfDay();
 
@@ -103,7 +103,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
             throw new BusinessException("actor", "Người thực hiện không được vượt quá 50 ký tự.");
         }
 
-        // Escape cả dấu [ vì SQL Server dùng ký tự này để mở nhóm trong LIKE.
+
         value = value.toLowerCase(Locale.ROOT)
                 .replace("!", "!!")
                 .replace("%", "!%")
@@ -141,7 +141,7 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
         try {
             int pageNumber = Integer.parseInt(page.trim());
-            // JPA nhận offset kiểu int, kiểm tra cả pageNumber * PAGE_SIZE.
+
             if (pageNumber < 0 || pageNumber > Integer.MAX_VALUE / PAGE_SIZE) {
                 throw new BusinessException("page", "Số trang không hợp lệ. Vui lòng quay về trang đầu.");
             }

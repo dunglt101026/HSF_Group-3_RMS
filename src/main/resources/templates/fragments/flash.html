@@ -2,14 +2,14 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
     <div th:fragment="flash-messages">
-        <!-- Thông báo thành công -->
+
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>
             <span th:text="${success}">Thành công</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
-        <!-- Thông báo lỗi (flash attribute từ redirect, dùng key "error") -->
+
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i>
             <span th:text="${error}">Đã xảy ra lỗi</span>

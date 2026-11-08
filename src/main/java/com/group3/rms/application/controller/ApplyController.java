@@ -22,7 +22,7 @@ public class ApplyController {
 
     private final CandidateApplicationService candidateApplicationService;
 
-    // SCR-15: Nộp hồ sơ (UC-18).
+
     @GetMapping
     public String applyForm(@PathVariable Long jobId, Model model, RedirectAttributes ra) {
         model.addAttribute("form", ApplicationCreateRequest.empty());
@@ -44,14 +44,14 @@ public class ApplyController {
                 return "redirect:/my/applications";
             }
         } catch (BusinessException e) {
-            // Lỗi không gắn với ô nào (đã nộp rồi, tin vừa đóng) → quay về SCR-14.
+
             if (e.getField() == null) {
                 return backToJob(jobId, e, ra);
             }
             e.applyTo(bindingResult);
         }
 
-        // Dữ liệu chưa hợp lệ → hiện lại form với lỗi dưới từng ô.
+
         return showForm(jobId, model, ra);
     }
 

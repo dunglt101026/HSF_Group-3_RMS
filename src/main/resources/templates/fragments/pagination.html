@@ -2,20 +2,20 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!--
-    ============================================================================
-    FRAGMENT: pagination.html
-    Thanh điều hướng phân trang dùng chung cho Spring Data Page<?>
-    ============================================================================
--->
 
-<!-- 1. Thanh phân trang cơ bản (Gọn nhẹ: Trước | Trang X / Y | Sau) -->
+
+
+
+
+
+
+
 <nav th:fragment="pager(page, baseUrl)"
      th:if="${page != null and page.totalPages > 1}"
      class="d-flex justify-content-center my-3"
      aria-label="Điều hướng phân trang">
     <ul class="pagination mb-0">
-        <!-- Nút Trước -->
+
         <li class="page-item" th:classappend="${page.first} ? 'disabled'">
             <a class="page-link"
                th:href="@{${baseUrl}(page=${page.number - 1})}"
@@ -25,7 +25,7 @@
             </a>
         </li>
 
-        <!-- Vị trí trang hiện tại -->
+
         <li class="page-item disabled">
             <span class="page-link text-dark"
                   th:text="|Trang ${page.number + 1} / ${page.totalPages}|">
@@ -33,7 +33,7 @@
             </span>
         </li>
 
-        <!-- Nút Sau -->
+
         <li class="page-item" th:classappend="${page.last} ? 'disabled'">
             <a class="page-link"
                th:href="@{${baseUrl}(page=${page.number + 1})}"
@@ -44,7 +44,7 @@
         </li>
     </ul>
 
-    <!-- Script tự động giữ nguyên các tham số tìm kiếm/lọc trên URL hiện tại khi bấm chuyển trang -->
+
     <script th:inline="javascript">
         (function() {
             if (window._rmsPaginationInit) return;
@@ -65,12 +65,12 @@
     </script>
 </nav>
 
-<!-- 2. Thanh phân trang đầy đủ có số trang chi tiết và tổng số bản ghi -->
+
 <div th:fragment="pagination(page, baseUrl)"
      th:if="${page != null and page.totalPages > 1}"
      class="d-flex flex-wrap justify-content-between align-items-center gap-3 my-3">
 
-    <!-- Thông tin tổng số bản ghi -->
+
     <div class="text-muted small">
         Hiển thị
         <span class="fw-semibold" th:text="${page.number * page.size + 1}">1</span>
@@ -81,10 +81,10 @@
         <span class="fw-semibold" th:text="${page.totalElements}">100</span> bản ghi
     </div>
 
-    <!-- Danh sách số trang -->
+
     <nav aria-label="Phân trang danh sách">
         <ul class="pagination flex-wrap mb-0">
-            <!-- Nút Đầu -->
+
             <li class="page-item" th:classappend="${page.first} ? 'disabled'">
                 <a class="page-link"
                    th:href="${page.first} ? null : @{${baseUrl}(page=0)}"
@@ -95,7 +95,7 @@
                 </a>
             </li>
 
-            <!-- Nút Trước -->
+
             <li class="page-item" th:classappend="${page.first} ? 'disabled'">
                 <a class="page-link"
                    th:href="${page.first} ? null : @{${baseUrl}(page=${page.number - 1})}"
@@ -106,7 +106,7 @@
                 </a>
             </li>
 
-            <!-- Các số trang lân cận -->
+
             <th:block th:with="startPage=${T(java.lang.Math).max(0, page.number - 2)}, endPage=${T(java.lang.Math).min(page.totalPages - 1, page.number + 2)}">
                 <li th:each="i : ${#numbers.sequence(startPage, endPage)}"
                     class="page-item"
@@ -119,7 +119,7 @@
                 </li>
             </th:block>
 
-            <!-- Nút Sau -->
+
             <li class="page-item" th:classappend="${page.last} ? 'disabled'">
                 <a class="page-link"
                    th:href="${page.last} ? null : @{${baseUrl}(page=${page.number + 1})}"
@@ -130,7 +130,7 @@
                 </a>
             </li>
 
-            <!-- Nút Cuối -->
+
             <li class="page-item" th:classappend="${page.last} ? 'disabled'">
                 <a class="page-link"
                    th:href="${page.last} ? null : @{${baseUrl}(page=${page.totalPages - 1})}"

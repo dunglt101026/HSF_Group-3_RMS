@@ -19,7 +19,7 @@
 <body>
 <main layout:fragment="content">
 
-    <!-- Breadcrumb: HR về tin tuyển dụng, người phỏng vấn về lịch của mình -->
+
     <nav aria-label="Điều hướng">
         <ol class="breadcrumb">
             <th:block th:if="${app.actions.hrViewer}">
@@ -44,7 +44,7 @@
             <span th:text="${app.candidateFullName}">Ứng viên</span>
         </h1>
 
-        <!-- Nhóm nút xử lý (UC-22, UC-23) -->
+
         <div class="d-flex gap-2 flex-wrap">
             <a th:if="${app.actions.canSchedule}"
                th:href="@{/applications/{id}/interviews/new(id=${app.id})}"
@@ -52,7 +52,7 @@
                 <i class="bi bi-calendar-plus me-1"></i>Lên lịch phỏng vấn
             </a>
 
-            <!-- Xác nhận qua modal dùng chung (fragments/confirm-dialog); service vẫn kiểm tra quyền và trạng thái -->
+
             <button th:if="${app.actions.canApprove}" type="button" class="btn btn-primary"
                     data-bs-toggle="modal" data-bs-target="#rmsConfirmModal"
                     data-confirm-title="Duyệt hồ sơ"
@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <!-- Trạng thái kết thúc → banner, không còn nút xử lý -->
+
     <div th:if="${app.finished()}" class="alert d-flex align-items-center gap-2"
          th:classappend="${app.status.name() == 'HIRED'} ? 'alert-success'
                         : (${app.status.name() == 'REJECTED'} ? 'alert-danger' : 'alert-secondary')">
@@ -99,7 +99,7 @@
               th:text="'(' + ${#temporals.format(app.statusChangedAt, 'dd/MM/yyyy HH:mm')} + ')'"></span>
     </div>
 
-    <!-- HR không phụ trách tin chỉ xem được, nói rõ để khỏi tưởng nút bị mất -->
+
     <div th:if="${app.actions.hrViewer and !app.actions.jobOwner and !app.finished()}"
          class="alert alert-info d-flex align-items-center gap-2">
         <i class="bi bi-eye"></i>
@@ -107,7 +107,7 @@
     </div>
 
     <div class="row g-4">
-        <!-- Thông tin ứng viên -->
+
         <div class="col-12 col-lg-5">
             <div class="card h-100">
                 <div class="card-body p-4">
@@ -141,7 +141,7 @@
             </div>
         </div>
 
-        <!-- Thông tin hồ sơ -->
+
         <div class="col-12 col-lg-7">
             <div class="card h-100">
                 <div class="card-body p-4">
@@ -174,12 +174,12 @@
         </div>
     </div>
 
-    <!-- Các vòng phỏng vấn -->
+
     <div class="card mt-4">
         <div class="card-body p-4">
             <h2 class="h5 fw-bold mb-3">Các vòng phỏng vấn</h2>
 
-            <!-- Gợi ý bước tiếp theo cho HR phụ trách khi hồ sơ đang ở vòng phỏng vấn -->
+
             <th:block th:if="${app.actions.jobOwner and app.status.name() == 'INTERVIEW'}">
                 <div th:if="${#lists.isEmpty(app.interviews)}" class="alert alert-info py-2">
                     <i class="bi bi-lightbulb me-1"></i>Hồ sơ đã được duyệt. Bấm "Lên lịch phỏng vấn" để tạo vòng 1.
@@ -249,7 +249,7 @@
         </div>
     </div>
 
-    <!-- Modal xác nhận dùng chung cho các nút Duyệt / Tuyển / Loại -->
+
     <th:block th:if="${app.actions.canApprove or app.actions.canHire or app.actions.canReject}">
         <div th:replace="~{fragments/confirm-dialog :: dynamic-modal}"></div>
     </th:block>

@@ -8,10 +8,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Wrapper để Spring Security nhận diện user qua SecurityContext.
- * Lưu thêm CurrentUser để controller truy xuất thông tin nghiệp vụ.
- */
+
+
+
+
 public record RmsUserDetails(
         Long id,
         String username,
@@ -41,7 +41,7 @@ public record RmsUserDetails(
         return enabled;
     }
 
-    /** Chuyển sang CurrentUser dùng trong logic nghiệp vụ. */
+
     public CurrentUser toCurrentUser() {
         return new CurrentUser(id, username, fullName, role);
     }

@@ -25,7 +25,7 @@
             <div class="card">
                 <div class="card-body p-4">
 
-                    <!-- Thông tin chỉ đọc -->
+
                     <dl class="row gy-2 mb-4">
                         <dt class="col-sm-4">Vị trí</dt>
                         <dd class="col-sm-8 mb-0" th:text="${applyForm.jobTitle}">Vị trí</dd>
@@ -74,7 +74,7 @@
 
 <th:block layout:fragment="scripts">
     <script>
-        // Báo sớm khi file quá lớn, tránh phải tải cả file lên mới biết. Server vẫn kiểm tra lại.
+
         const MAX_CV_BYTES = 5 * 1024 * 1024;
         const cvInput = document.getElementById("cvFile");
 

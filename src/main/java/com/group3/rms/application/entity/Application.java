@@ -19,15 +19,15 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** Hồ sơ ứng tuyển. Mỗi Candidate nộp 1 lần cho mỗi tin (UNIQUE job_id + candidate_id). */
+
 @Entity
 @Table(name = "applications",
         uniqueConstraints = @UniqueConstraint(name = "uq_applications_job_candidate",
                 columnNames = {"job_id", "candidate_id"}),
         indexes = {
-                // Đếm / lọc hồ sơ theo tin và trạng thái (SCR-09, SCR-11, SCR-12).
+
                 @Index(name = "ix_applications_job_status", columnList = "job_id, status"),
-                // Danh sách hồ sơ của một ứng viên (SCR-16).
+
                 @Index(name = "ix_applications_candidate", columnList = "candidate_id")
         })
 @Getter
@@ -43,11 +43,11 @@ public class Application extends BaseEntity {
     @JoinColumn(name = "candidate_id", nullable = false)
     private User candidate;
 
-    /** Đường dẫn file CV đã đặt lại tên, lưu ngoài thư mục web. */
+
     @Column(name = "cv_path", nullable = false, length = 500)
     private String cvPath;
 
-    /** Tên file gốc, dùng khi tải về. */
+
     @Column(name = "cv_original_name", nullable = false, length = 255)
     private String cvOriginalName;
 

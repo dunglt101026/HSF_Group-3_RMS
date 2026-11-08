@@ -39,7 +39,7 @@
                 </div>
             </div>
 
-            <!-- Vùng hành động theo điều kiện của người xem (UC-17) -->
+
             <div th:switch="${job.applyState.name()}">
                 <a th:case="'CAN_APPLY'" th:href="@{/jobs/{id}/apply(id=${job.id})}" class="btn btn-primary">
                     <i class="bi bi-send me-1"></i>Ứng tuyển
@@ -55,7 +55,7 @@
                 </div>
             </div>
 
-            <!-- Nhân viên nội bộ không ứng tuyển được: đưa về đúng nơi làm việc của vai trò -->
+
             <div th:if="${currentUser != null and currentUser.role.name() != 'CANDIDATE'}"
                  th:switch="${currentUser.role.name()}" class="d-flex gap-2 flex-wrap mt-3">
                 <th:block th:case="'HR'">

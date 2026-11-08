@@ -17,7 +17,7 @@
         </h1>
     </div>
 
-    <!-- Tab: Sắp tới / Cần đánh giá / Đã đánh giá -->
+
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
             <a class="nav-link"
@@ -52,13 +52,13 @@
     <div class="card">
         <div class="card-body p-0">
 
-            <!-- Chưa có lịch nào -->
+
             <div th:if="${!schedule.hasAnyInterview()}" class="text-center text-muted py-5">
                 <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
                 Bạn chưa có lịch phỏng vấn nào.
             </div>
 
-            <!-- Có lịch nhưng tab đang chọn trống -->
+
             <div th:if="${schedule.hasAnyInterview() and #lists.isEmpty(schedule.interviews)}"
                  class="text-center text-muted py-5">
                 Không có buổi phỏng vấn nào trong mục này.
@@ -89,7 +89,7 @@
                             <th:block th:replace="~{fragments/status-badge :: interview-status(${item.status})}"></th:block>
                             <span th:if="${item.rating != null}" class="small text-muted ms-1"
                                   th:text="${item.rating} + '/5'">4/5</span>
-                            <!-- Hồ sơ đã kết thúc thì buổi chưa đánh giá không còn nhận đánh giá -->
+
                             <div th:if="${item.status.name() == 'SCHEDULED' and item.applicationStatus.name() != 'INTERVIEW'}"
                                  class="small text-muted mt-1">
                                 <i class="bi bi-info-circle me-1"></i>Hồ sơ không còn trong quá trình phỏng vấn

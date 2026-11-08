@@ -2,15 +2,15 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<!--
-    ============================================================================
-    FRAGMENT: confirm-dialog.html
-    Hộp thoại Modal xác nhận hành động dùng chung (Bootstrap 5 Modal)
-    Tương thích Spring Security CSRF & không phụ thuộc thư viện ngoài.
-    ============================================================================
--->
 
-<!-- 1. Modal xác nhận theo form hành động cụ thể -->
+
+
+
+
+
+
+
+
 <div th:fragment="modal(id, title, message, formAction, submitText, btnClass)"
      class="modal fade"
      th:id="${id}"
@@ -37,7 +37,7 @@
                     Hủy bỏ
                 </button>
                 <form th:action="${formAction}" method="post" class="d-inline m-0">
-                    <!-- CSRF Token hỗ trợ Spring Security -->
+
                     <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <button type="submit"
                             class="btn fw-semibold"
@@ -51,7 +51,7 @@
     </div>
 </div>
 
-<!-- 2. Modal xác nhận động (Một modal duy nhất dùng cho nhiều nút bấm trên cùng trang) -->
+
 <div th:fragment="dynamic-modal"
      class="modal fade"
      id="rmsConfirmModal"
@@ -86,7 +86,7 @@
         </div>
     </div>
 
-    <!-- Script tự động cập nhật nội dung modal động khi người dùng bấm vào nút kích hoạt -->
+
     <script th:inline="javascript">
         (function() {
             const modalEl = document.getElementById('rmsConfirmModal');

@@ -3,26 +3,26 @@
 <body>
 <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
     <div class="container-fluid">
-        <!-- Brand: về trang chủ công khai (danh sách việc làm) cho mọi vai trò; menu vai trò vẫn nằm bên cạnh -->
+
         <a class="navbar-brand fw-bold" th:href="@{/jobs}">
             <i class="bi bi-briefcase-fill text-primary me-2"></i>RMS
         </a>
 
-        <!-- Toggle button for mobile -->
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#rmsNavbar"
                 aria-controls="rmsNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <!-- Links & User info -->
+
         <div class="collapse navbar-collapse" id="rmsNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <!-- Guest xem việc làm công khai (UC-16) -->
+
                 <li class="nav-item" th:if="${currentUser == null}">
                     <a class="nav-link" th:href="@{/jobs}">Việc làm</a>
                 </li>
 
-                <!-- Menu dành cho người dùng đã đăng nhập theo vai trò -->
+
                 <th:block th:if="${currentUser != null}">
                     <li class="nav-item" th:if="${currentUser.role.name() == 'ADMIN'}">
                         <a class="nav-link" th:href="@{/admin/users}">Quản lý tài khoản</a>
@@ -36,7 +36,7 @@
                             Tin tuyển dụng
                         </a>
                     </li>
-                    <!-- UC-24: Lịch phỏng vấn hiển thị cho cả INTERVIEWER và HR -->
+
                     <li class="nav-item"
                         th:if="${currentUser.role.name() == 'INTERVIEWER'
                           or currentUser.role.name() == 'HR'}">
@@ -53,9 +53,9 @@
                 </th:block>
             </ul>
 
-            <!-- Phía bên phải: Người dùng & Đăng xuất / Đăng nhập -->
+
             <div class="d-flex align-items-center gap-2">
-                <!-- Khi đã đăng nhập -->
+
                 <div th:if="${currentUser != null}" class="d-flex align-items-center gap-3">
                     <div class="text-light small">
                         <span class="fw-semibold" th:text="${currentUser.fullName}">Người dùng</span>
@@ -72,7 +72,7 @@
                     </form>
                 </div>
 
-                <!-- Khi chưa đăng nhập (Guest) -->
+
                 <div th:if="${currentUser == null}" class="d-flex gap-2">
                     <a th:href="@{/login}" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập

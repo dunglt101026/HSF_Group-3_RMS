@@ -5,7 +5,7 @@ import com.group3.rms.interview.entity.InterviewStatus;
 
 import java.time.LocalDateTime;
 
-/** Một dòng trong bảng "Lịch phỏng vấn của tôi" (SCR-19). */
+
 public record MyInterviewResponse(
         Long id,
         Long applicationId,

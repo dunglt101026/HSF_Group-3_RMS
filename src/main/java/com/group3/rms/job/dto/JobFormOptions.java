@@ -5,10 +5,10 @@ import com.group3.rms.job.entity.Skill;
 
 import java.util.List;
 
-/**
- * Dữ liệu cho các ô chọn của SCR-10 (phòng ban, kỹ năng).
- * Template chỉ nhận DTO, không nhận Entity.
- */
+
+
+
+
 public record JobFormOptions(
         List<Option> departments,
         List<Option> skills

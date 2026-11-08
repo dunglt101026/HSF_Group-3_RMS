@@ -41,7 +41,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class InterviewServiceImpl implements InterviewService {
 
-    /** Vai trò được giao phỏng vấn (HR có thể tự phỏng vấn). */
+
     private static final List<RoleCode> INTERVIEWER_ROLES = List.of(RoleCode.HR, RoleCode.INTERVIEWER);
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -51,7 +51,7 @@ public class InterviewServiceImpl implements InterviewService {
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
 
-    // UC-23: Form lên lịch phỏng vấn.
+
     @Override
     public InterviewScheduleFormResponse getScheduleForm(Long applicationId) {
         CurrentUser user = currentUserService.require();
@@ -68,12 +68,12 @@ public class InterviewServiceImpl implements InterviewService {
         );
     }
 
-    // UC-23: Lên lịch phỏng vấn.
+
     @Override
     @Transactional
     public InterviewScheduledResponse scheduleInterview(Long applicationId, InterviewCreateRequest request) {
         CurrentUser user = currentUserService.require();
-        // Khóa hồ sơ để hai lần lưu đồng thời không tạo trùng số vòng.
+
         Application application = applicationRepository.findByIdForUpdate(applicationId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
         checkCanSchedule(application, user);
@@ -111,7 +111,7 @@ public class InterviewServiceImpl implements InterviewService {
         return new InterviewScheduledResponse(saved.getId(), roundNo, interviewer.getFullName());
     }
 
-    // UC-24: Xem lịch phỏng vấn của tôi.
+
     @Override
     public MyInterviewScheduleResponse getMySchedule(MyInterviewTab tab) {
         CurrentUser user = currentUserService.require();
@@ -150,7 +150,7 @@ public class InterviewServiceImpl implements InterviewService {
         );
     }
 
-    // UC-25: Xem form / kết quả đánh giá.
+
     @Override
     public InterviewEvaluationResponse getEvaluation(Long interviewId) {
         CurrentUser user = currentUserService.require();
@@ -158,14 +158,14 @@ public class InterviewServiceImpl implements InterviewService {
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy buổi phỏng vấn."));
         checkAssigned(interview, user);
 
-        // Đã đánh giá → vẫn mở được để xem ở chế độ chỉ đọc.
+
         if (interview.getStatus() != InterviewStatus.EVALUATED) {
             checkEvaluable(interview);
         }
         return interviewMapper.toEvaluation(interview);
     }
 
-    // UC-25: Gửi đánh giá phỏng vấn.
+
     @Override
     @Transactional
     public void submitEvaluation(Long interviewId, InterviewEvaluationRequest request) {
@@ -195,14 +195,14 @@ public class InterviewServiceImpl implements InterviewService {
         log.info("{} gửi đánh giá buổi phỏng vấn #{}", user.username(), interview.getId());
     }
 
-    /** Chỉ người được giao mới xem / gửi đánh giá. */
+
     private void checkAssigned(Interview interview, CurrentUser user) {
         if (!InterviewRules.isAssignedTo(interview, user.id())) {
             throw new ForbiddenException("Bạn không được giao buổi phỏng vấn này.");
         }
     }
 
-    /** Buổi chưa đánh giá: hồ sơ còn INTERVIEW và đã tới giờ hẹn. */
+
     private void checkEvaluable(Interview interview) {
         if (interview.getApplication().getStatus() != ApplicationStatus.INTERVIEW) {
             throw new BusinessException("Hồ sơ không còn trong quá trình phỏng vấn.");
@@ -212,7 +212,7 @@ public class InterviewServiceImpl implements InterviewService {
         }
     }
 
-    /** Chỉ HR phụ trách tin, và chỉ khi hồ sơ đang INTERVIEW. */
+
     private void checkCanSchedule(Application application, CurrentUser user) {
         boolean jobOwner = user.role() == RoleCode.HR
                 && user.id().equals(application.getJob().getOwner().getId());

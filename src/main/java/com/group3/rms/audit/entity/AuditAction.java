@@ -1,6 +1,6 @@
 package com.group3.rms.audit.entity;
 
-/** Các hành động được ghi nhật ký — xem docs/database.md mục 3. */
+
 public enum AuditAction {
     REGISTER,
     CREATE_ACCOUNT,

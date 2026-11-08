@@ -32,12 +32,12 @@ public interface PublicJobMapper {
 
     DepartmentOptionResponse toDepartmentOption(Department department);
 
-    /** Tên kỹ năng theo thứ tự chữ cái. */
+
     default List<String> skillNames(Set<Skill> skills) {
         return skills.stream().map(Skill::getName).sorted().toList();
     }
 
-    /** Ví dụ: "15.000.000 – 30.000.000 VNĐ", "Từ 8.000.000 VNĐ", "Thỏa thuận". */
+
     default String salaryText(BigDecimal min, BigDecimal max) {
         NumberFormat format = NumberFormat.getIntegerInstance(Locale.forLanguageTag("vi-VN"));
         if (min != null && max != null) {

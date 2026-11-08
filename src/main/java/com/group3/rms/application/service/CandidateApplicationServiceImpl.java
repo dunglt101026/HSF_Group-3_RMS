@@ -57,7 +57,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
     private final CurrentUserService currentUserService;
     private final AuditLogService auditLogService;
 
-    // UC-18: Mở form nộp hồ sơ.
+
     @Override
     public ApplyFormResponse getApplyForm(Long jobId) {
         User candidate = requireActiveCandidate();
@@ -66,7 +66,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         return myApplicationMapper.toApplyForm(job, candidate);
     }
 
-    // UC-18: Nộp hồ sơ kèm CV.
+
     @Override
     @Transactional
     public Long apply(Long jobId, ApplicationCreateRequest request) {
@@ -85,14 +85,14 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
             application.setStatus(ApplicationStatus.APPLIED);
             application.setStatusChangedAt(LocalDateTime.now());
 
-            // Flush để ràng buộc UNIQUE (job, candidate) được kiểm tra ngay tại đây.
+
             Application saved = applicationRepository.saveAndFlush(application);
             auditLogService.log(AuditAction.APPLY, TargetType.APPLICATION, saved.getId(),
                     "Nộp hồ sơ vào tin #" + job.getId());
             log.info("{} nộp hồ sơ #{} vào tin #{}", candidate.getUsername(), saved.getId(), job.getId());
             return saved.getId();
         } catch (DataIntegrityViolationException e) {
-            // Hai lần nộp đồng thời: lần sau vi phạm UNIQUE.
+
             fileStorageService.delete(cvPath);
             throw new BusinessException("Bạn đã ứng tuyển vị trí này.");
         } catch (RuntimeException e) {
@@ -101,7 +101,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         }
     }
 
-    // UC-19: Xem hồ sơ ứng tuyển của tôi.
+
     @Override
     public MyApplicationListResponse getMyApplications(ApplicationStatus status) {
         User candidate = requireActiveCandidate();
@@ -127,12 +127,12 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         return new MyApplicationListResponse(status, rows, all.size(), statusCounts);
     }
 
-    // UC-20: Rút hồ sơ.
+
     @Override
     @Transactional
     public void withdraw(Long applicationId) {
         User candidate = requireActiveCandidate();
-        // Khóa hồ sơ để không ghi đè thao tác đồng thời của HR (duyệt, loại, tuyển).
+
         Application application = applicationRepository.findByIdForUpdate(applicationId)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
 
@@ -152,7 +152,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         log.info("{} rút hồ sơ #{}", candidate.getUsername(), application.getId());
     }
 
-    // Bổ sung ngoài đặc tả: ứng viên xem lại CV đã nộp.
+
     @Override
     public CvFileResponse getMyCv(Long applicationId) {
         User candidate = requireActiveCandidate();
@@ -160,18 +160,18 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy hồ sơ."));
         requireOwner(application, candidate);
 
-        // File không còn trên máy chủ → BusinessException, quay về trang trước kèm thông báo.
+
         return new CvFileResponse(fileStorageService.load(application.getCvPath()), application.getCvOriginalName());
     }
 
-    /** Ứng viên chỉ thao tác trên hồ sơ của chính mình. */
+
     private void requireOwner(Application application, User candidate) {
         if (!candidate.getId().equals(application.getCandidate().getId())) {
             throw new ForbiddenException("Bạn không có quyền với hồ sơ này.");
         }
     }
 
-    /** Kiểm tra bằng dữ liệu hiện tại, để tài khoản vừa bị khóa không thao tác tiếp bằng phiên cũ. */
+
     private User requireActiveCandidate() {
         CurrentUser current = currentUserService.require();
         if (current.role() != RoleCode.CANDIDATE) {
@@ -185,7 +185,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         return user;
     }
 
-    /** Tin DRAFT, đã xóa hoặc không tồn tại: coi như không tìm thấy. */
+
     private Job findPublishedJob(Long jobId) {
         return jobRepository.findByIdAndDeletedFalse(jobId)
                 .filter(job -> job.getStatus() != JobStatus.DRAFT)
@@ -201,7 +201,7 @@ public class CandidateApplicationServiceImpl implements CandidateApplicationServ
         }
     }
 
-    /** Bỏ phần thư mục mà một số trình duyệt gửi kèm tên file. */
+
     private String originalFileName(ApplicationCreateRequest request) {
         String fileName = StringUtils.getFilename(StringUtils.cleanPath(request.cvFile().getOriginalFilename()));
         if (fileName == null || fileName.length() > MAX_FILE_NAME_LENGTH) {

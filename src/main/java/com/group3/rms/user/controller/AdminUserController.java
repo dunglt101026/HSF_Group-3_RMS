@@ -87,7 +87,7 @@ public class AdminUserController {
             return "redirect:/login";
         }
 
-        // Kiểm tra quyền cả khi form sai, tránh trả form cho người không có quyền.
+
         adminUserService.checkCreatePermission();
         if (!bindingResult.hasErrors()) {
             try {
@@ -95,7 +95,7 @@ public class AdminUserController {
                 try {
                     id = adminUserService.createUser(form);
                 } catch (DataIntegrityViolationException e) {
-                    // Giao dịch tạo đã rollback; truy vấn lại trong giao dịch đọc mới.
+
                     adminUserService.checkAccountAvailability(form.username(), form.email());
                     throw e;
                 }
@@ -159,7 +159,7 @@ public class AdminUserController {
     ) {
         try {
             if (bindingResult.hasErrors()) {
-                // Vẫn kiểm tra quyền và tài khoản đích khi dữ liệu form không hợp lệ.
+
                 adminUserService.getUserDetail(id);
                 ra.addFlashAttribute("error", bindingResult.getAllErrors().getFirst().getDefaultMessage());
             } else {
@@ -179,7 +179,7 @@ public class AdminUserController {
         );
         BindingResult safeResult = new BeanPropertyBindingResult(safeForm, "form");
 
-        // Xóa cả mật khẩu trong DTO lẫn rejectedValue của lỗi validation.
+
         for (ObjectError error : bindingResult.getAllErrors()) {
             if (error instanceof FieldError fieldError) {
                 Object rejectedValue = fieldError.getRejectedValue();

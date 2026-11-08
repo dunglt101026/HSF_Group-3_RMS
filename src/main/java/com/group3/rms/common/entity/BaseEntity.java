@@ -15,10 +15,10 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-/**
- * Lớp cha cho bảng nghiệp vụ: {@code users}, {@code jobs}, {@code applications}, {@code interviews}.
- * Có sẵn {@code id} và 4 cột audit do JPA Auditing tự điền — không tự set bằng tay.
- */
+
+
+
+
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 @Getter

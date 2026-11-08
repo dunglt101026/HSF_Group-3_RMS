@@ -18,7 +18,7 @@ public interface InterviewMapper {
     @Mapping(target = "canEvaluate", source = "canEvaluate")
     MyInterviewResponse toMyInterview(Interview interview, boolean canEvaluate);
 
-    /** Ẩn điểm và nhận xét khi người xem không được thấy đánh giá của vòng này (UC-21). */
+
     @Mapping(target = "id", source = "interview.id")
     @Mapping(target = "interviewerName", source = "interview.interviewer.fullName")
     @Mapping(target = "rating", expression = "java(evaluationVisible ? interview.getRating() : null)")

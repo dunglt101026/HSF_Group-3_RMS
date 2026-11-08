@@ -20,12 +20,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Optional;
 
-/**
- * Filter tự động kiểm tra và đồng bộ phiên đăng nhập của người dùng mỗi request:
- * 1. UC-08: Nếu Admin khóa tài khoản (INACTIVE) hoặc xóa, ngay lập tức hủy session và đá ra trang login.
- * 2. UC-09: Nếu Admin đổi vai trò (RoleCode), cập nhật lại Authentication trong SecurityContext
- *    và CurrentUser trong Session để phân quyền áp dụng ngay mà không cần đợi đăng nhập lại.
- */
+
+
+
+
+
+
 @Slf4j
 @RequiredArgsConstructor
 public class UserSessionSyncFilter extends OncePerRequestFilter {
@@ -44,11 +44,11 @@ public class UserSessionSyncFilter extends OncePerRequestFilter {
             String contextPath = request.getContextPath();
             String path = uri.substring(contextPath.length());
 
-            // Dùng findWithRolesById để eager-load roles trong 1 truy vấn,
-            // tránh LazyInitializationException khi truy cập roles ngoài transaction.
+
+
             Optional<User> optionalUser = userRepository.findWithRolesById(userDetails.id());
 
-            // 1. Kiểm tra tài khoản bị xóa hoặc bị khóa (UC-08)
+
             if (optionalUser.isEmpty() || optionalUser.get().getStatus() != UserStatus.ACTIVE) {
                 log.warn("Tài khoản '{}' (ID={}) đã bị khóa hoặc không còn tồn tại. Hủy phiên làm việc.",
                         userDetails.username(), userDetails.id());
@@ -70,7 +70,7 @@ public class UserSessionSyncFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // 2. Đồng bộ vai trò và thông tin cá nhân nếu Admin đổi vai trò (UC-09) hoặc đổi họ tên
+
             User user = optionalUser.get();
             RoleCode dbRole = user.getRoles().stream()
                     .findFirst()

@@ -13,10 +13,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Tích hợp User entity với Spring Security.
- * Được dùng bởi DaoAuthenticationProvider để xác thực.
- */
+
+
+
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
