@@ -24,7 +24,7 @@ src/main/java/com/group3/rms/
 │   ├── exception/               BusinessException, NotFoundException, ForbiddenException,
 │   │                            GlobalExceptionHandler, ApiExceptionHandler
 │   ├── security/                CurrentUser, CurrentUserService, SessionCurrentUserService,
-│   │                            UserSessionSyncFilter, SecurityConfig (Sprint 3)
+│   │                            UserSessionSyncFilter, SecurityConfig
 │   ├── storage/                 FileStorageService (lưu / đọc file CV)
 │   └── web/                     GlobalModelAttributes (đưa currentUser vào mọi trang),
 │                                HomeController ("/" → trang chủ theo vai trò)
@@ -64,7 +64,7 @@ src/main/resources/
 │   │   └── auth.html        đăng nhập / đăng ký: không menu
 │   ├── fragments/           flash.html (thông báo), pagination.html, confirm-dialog.html,
 │   │                        status-badge.html (nhãn màu trạng thái tin / hồ sơ / phỏng vấn)
-│   ├── error/               403.html, 404.html, 500.html
+│   ├── error/               403.html, 404.html, 413.html, 500.html
 │   ├── auth/                login (SCR-01), register (SCR-02)
 │   ├── profile/             view (SCR-03), password (SCR-04)
 │   ├── admin/               user-list (SCR-05), user-form (SCR-06), user-detail (SCR-07), activity-log (SCR-08)
@@ -142,7 +142,7 @@ public interface CurrentUserService {
 }
 ```
 
-- **Spring Security (Sprint 3):** Đã tích hợp `SecurityConfig`, quản lý xác thực bằng form login, phân quyền URL theo vai trò, CSRF token, tự động đồng bộ phiên/hủy phiên khi bị khóa hoặc đổi vai trò (UC-08, UC-09). `CurrentUserService` được cập nhật đồng bộ với `SecurityContextHolder`.
+- **Spring Security:** Đã tích hợp `SecurityConfig`, quản lý xác thực bằng form login, phân quyền URL theo vai trò, CSRF token, tự động đồng bộ phiên/hủy phiên khi bị khóa hoặc đổi vai trò (UC-08, UC-09). `CurrentUserService` được cập nhật đồng bộ với `SecurityContextHolder`.
 
 ## 4. Validate và xử lý lỗi: dùng cả hai, mỗi cái một việc
 
@@ -236,7 +236,7 @@ public class GlobalExceptionHandler {
 ```
 
 - Phân quyền, trạng thái tài khoản, quyền sở hữu và quy tắc nghiệp vụ **luôn kiểm tra tại Service bằng dữ liệu hiện tại**, kể cả khi giao diện đã ẩn nút hoặc yêu cầu đến từ phiên cũ. Áp dụng cho cả người thực hiện và tài khoản / dữ liệu đích theo UC. Ẩn nút chỉ để dễ dùng, không phải để bảo mật.
-- Khi bật Spring Security: thêm `AccessDeniedException` của Spring Security vào nhóm 403, để handler `Exception` không biến nó thành 500.
+- Đã thêm `AccessDeniedException` của Spring Security vào nhóm 403 của `GlobalExceptionHandler`, để khi sai quyền hệ thống trả về trang 403 thay vì bị biến thành 500.
 - `ApiExceptionHandler` đặt `@Order(Ordered.HIGHEST_PRECEDENCE)` và chỉ áp dụng cho `@RestController`.
 
 ## 5. AJAX: server render là chính, AJAX chỉ ở vài chỗ
@@ -244,7 +244,7 @@ public class GlobalExceptionHandler {
 - Mặc định: form submit thường, kiểu **POST → redirect → GET** để F5 không gửi lại form.
 - AJAX chỉ dùng khi thật sự cải thiện trải nghiệm, khoảng 2–3 chỗ. Ví dụ: kiểm tra tên đăng nhập trùng khi đang gõ (SCR-02), đổi tab lọc không tải lại trang.
 - Endpoint AJAX đặt dưới `/api/**`, dùng `@RestController` trả `record`. Phía trình duyệt dùng `fetch()`, không cần jQuery. Muốn trả về mẩu HTML thì dùng htmx với fragment Thymeleaf.
-- Khi bật Spring Security: gửi kèm CSRF token trong header (đọc từ thẻ `<meta>` trong layout).
+- Đã cấu hình gửi kèm CSRF token trong header (đọc từ thẻ `<meta>` trong layout) và tự động sinh thẻ hidden CSRF trong mọi form thay đổi dữ liệu.
 - `@Async` của Spring (chạy việc ngầm) không dùng trong dự án này.
 
 ## 6. DTO, Mapper, Entity, Service
@@ -292,7 +292,7 @@ public class GlobalExceptionHandler {
 | Giai đoạn | Việc |
 | :--- | :--- |
 | Từ đầu | Mật khẩu băm BCrypt (chỉ thêm `spring-security-crypto`, chưa thêm `spring-boot-starter-security`); URL theo tiền tố vai trò ngay từ đầu (`/admin/**`, `/hr/**`, `/interviews/**`, `/my/**`; công khai `/`, `/jobs/**`); layout có sẵn thẻ `<meta>` CSRF; mọi thao tác đổi dữ liệu dùng POST; in dữ liệu bằng `th:text`; kiểm tra quyền sở hữu ở service (HR phụ trách, người phỏng vấn được giao, Candidate chủ hồ sơ); file CV lưu ngoài thư mục web, kiểm tra quyền trước khi tải |
-| Hiện tại (Sprint 3) | Spring Security đã bật: form login, phân quyền URL theo vai trò (`/admin/**`, `/hr/**`, `/interviews/**`, `/applications/**`, `/my/**`), CSRF, trang lỗi 403/404/500 có layout navbar, filter `UserSessionSyncFilter` tự động đồng bộ session khi đổi role và hủy session khi tài khoản bị khóa (UC-08, UC-09). |
+| Hiện tại | Spring Security đã bật: form login, phân quyền URL theo vai trò (`/admin/**`, `/hr/**`, `/interviews/**`, `/applications/**`, `/my/**`), CSRF, các trang lỗi 403/404/413/500 có layout navbar, filter `UserSessionSyncFilter` tự động đồng bộ session khi đổi role và hủy session khi tài khoản bị khóa (UC-08, UC-09). |
 
 Các ràng buộc quản trị trong đặc tả tại `docs/requirements/` phải được kiểm tra ở Service:
 
