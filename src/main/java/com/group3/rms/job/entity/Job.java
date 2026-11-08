@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-/** Tin tuyển dụng. Xóa mềm: chỉ đặt {@code deleted = true}, không xóa dòng. */
+
 @Entity
 @Table(name = "jobs")
 @Getter
@@ -46,7 +46,7 @@ public class Job extends BaseEntity {
     @Column(name = "salary_max", precision = 15, scale = 2)
     private BigDecimal salaryMax;
 
-    /** Hạn nộp hồ sơ. */
+
     @Column(nullable = false)
     private LocalDate deadline;
 
@@ -61,7 +61,7 @@ public class Job extends BaseEntity {
     @JoinColumn(name = "department_id", nullable = false)
     private Department department;
 
-    /** HR phụ trách tin. */
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;

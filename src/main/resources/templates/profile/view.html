@@ -9,7 +9,7 @@
 <body>
     <div layout:fragment="content">
         <div class="auth-card p-4 p-sm-5" style="max-width: 520px; margin: auto;">
-            <!-- Header -->
+
             <div class="auth-header">
                 <div class="logo-badge shadow-sm" style="background-color: #0dcaf0;">
                     <i class="bi bi-person-circle"></i>
@@ -18,12 +18,12 @@
                 <p class="text-muted small">Xem và cập nhật thông tin tài khoản của bạn</p>
             </div>
 
-            <!-- Flash alerts -->
+
             <div th:replace="~{fragments/flash :: flash-messages}"></div>
 
-            <!-- Form cập nhật thông tin cá nhân (UC-05) -->
+
             <form th:action="@{/profile}" th:object="${form}" method="post" novalidate>
-                <!-- Thông tin chỉ đọc: Tên đăng nhập, Email, Vai trò -->
+
                 <div class="card border-0 bg-light p-3 mb-3 shadow-sm rounded-3">
                     <div class="row mb-2">
                         <div class="col-sm-4 text-muted small fw-semibold">Tên đăng nhập:</div>
@@ -41,7 +41,7 @@
                     </div>
                 </div>
 
-                <!-- Họ và tên (sửa được) -->
+
                 <div class="mb-3">
                     <label for="fullName" class="form-label fw-semibold">Họ và tên <span class="text-danger">*</span></label>
                     <div class="input-group">
@@ -59,7 +59,7 @@
                     </div>
                 </div>
 
-                <!-- Số điện thoại (sửa được) -->
+
                 <div class="mb-4">
                     <label for="phone" class="form-label fw-semibold">Số điện thoại</label>
                     <div class="input-group">
@@ -76,13 +76,13 @@
                     </div>
                 </div>
 
-                <!-- Nút Lưu thông tin -->
+
                 <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm mb-3">
                     <i class="bi bi-save me-1"></i> Lưu thông tin
                 </button>
             </form>
 
-            <!-- Nút Đổi mật khẩu & Đăng xuất -->
+
             <div class="d-flex gap-2 pt-2 border-top">
                 <a th:href="@{/profile/password}" class="btn btn-outline-primary w-50 py-2">
                     <i class="bi bi-key-fill me-1"></i> Đổi mật khẩu
@@ -94,7 +94,7 @@
                 </form>
             </div>
 
-            <!-- Quay về trang chủ -->
+
             <div class="text-center mt-4 pt-2">
                 <a th:href="@{/}" class="text-muted text-decoration-none small">
                     <i class="bi bi-arrow-left"></i> Về trang chủ

@@ -12,7 +12,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Danh mục vai trò, nạp sẵn bằng seed.sql. */
+
 @Entity
 @Table(name = "roles")
 @Getter
@@ -28,7 +28,7 @@ public class Role {
     @Column(nullable = false, unique = true, length = 30)
     private RoleCode code;
 
-    /** Tên hiển thị, ví dụ "Nhân viên tuyển dụng". */
+
     @Column(nullable = false, length = 50)
     private String name;
 }

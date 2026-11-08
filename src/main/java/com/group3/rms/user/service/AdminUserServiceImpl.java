@@ -72,7 +72,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         List<AdminUserSummaryResponse> responses = new ArrayList<>();
         if (userIds.hasContent()) {
-            // Chỉ tải roles cho các ID của trang hiện tại, không fetch collection cùng Pageable.
+
             List<User> users = adminUserRepository.findAllWithRolesByIdIn(userIds.getContent());
             for (User user : users) {
                 RoleCode userRole = getSingleRole(user);
@@ -142,7 +142,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         user.setStatus(UserStatus.ACTIVE);
         user.setRoles(Set.of(role));
 
-        // Flush để ràng buộc UNIQUE được kiểm tra trước khi ghi nhật ký.
+
         User savedUser = adminUserRepository.saveAndFlush(user);
         auditLogService.log(
                 AuditAction.CREATE_ACCOUNT,
@@ -226,7 +226,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         requireActiveAdmin();
         validateUserId(id);
 
-        // Đọc vai trò dưới khóa bản ghi để các yêu cầu đồng thời không cập nhật và ghi log trùng.
+
         User user = adminUserRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
         RoleCode oldRole = getSingleRole(user);
@@ -278,7 +278,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     private User findUserForStatusChange(Long id) {
         validateUserId(id);
 
-        // Giữ khóa bản ghi đến hết giao dịch, tránh hai yêu cầu cùng ghi trạng thái và nhật ký.
+
         User user = adminUserRepository.findByIdForUpdate(id)
                 .orElseThrow(() -> new NotFoundException("Không tìm thấy tài khoản."));
         RoleCode role = getSingleRole(user);
@@ -322,7 +322,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             throw new BusinessException("keyword", "Từ khóa không được vượt quá 255 ký tự.");
         }
 
-        // SQL Server còn dùng dấu [ để mở nhóm ký tự trong LIKE.
+
         value = value.toLowerCase(Locale.ROOT)
                 .replace("!", "!!")
                 .replace("%", "!%")
@@ -366,7 +366,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         try {
             int pageNumber = Integer.parseInt(page.trim());
-            // JPA nhận offset kiểu int, nên cần kiểm tra cả pageNumber * PAGE_SIZE.
+
             if (pageNumber < 0 || pageNumber > Integer.MAX_VALUE / PAGE_SIZE) {
                 throw new BusinessException("page", "Số trang không hợp lệ. Vui lòng quay về trang đầu.");
             }

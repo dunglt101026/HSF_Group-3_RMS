@@ -16,7 +16,7 @@ public class PublicJobController {
 
     private final PublicJobService publicJobService;
 
-    // SCR-13: Việc làm (UC-16).
+
     @GetMapping
     public String listJobs(
             @RequestParam(required = false) String keyword,
@@ -25,7 +25,7 @@ public class PublicJobController {
             @RequestParam(required = false) String page,
             Model model
     ) {
-        // Tham số trên URL bị sửa tay thành giá trị sai thì bỏ qua, thay vì trả trang lỗi.
+
         Long department = parseNumber(departmentId);
         Long pageNumber = parseNumber(page);
         int safePage = pageNumber == null ? 0 : Math.clamp(pageNumber, 0, Integer.MAX_VALUE);
@@ -49,17 +49,17 @@ public class PublicJobController {
         }
     }
 
-    // SCR-14: Chi tiết việc làm (UC-17).
+
     @GetMapping("/{id}")
     public String jobDetail(@PathVariable Long id, Model model) {
         model.addAttribute("job", publicJobService.getJobDetail(id));
         return "career/detail";
     }
 
-    /**
-     * Nút "Đăng nhập để ứng tuyển" ở SCR-14. URL này cần đăng nhập nên Guest được chuyển tới SCR-01;
-     * Spring Security nhớ URL, đăng nhập xong mở lại URL này và quay về đúng trang chi tiết (UC-17).
-     */
+
+
+
+
     @GetMapping("/{id}/login-to-apply")
     public String loginToApply(@PathVariable Long id) {
         return "redirect:/jobs/" + id;

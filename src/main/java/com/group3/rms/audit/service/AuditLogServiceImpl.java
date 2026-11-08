@@ -28,7 +28,7 @@ public class AuditLogServiceImpl implements AuditLogService {
 
         Optional<CurrentUser> currentUser = currentUserService.get();
         String actor = currentUser.map(CurrentUser::username).orElse(null);
-        // Chỉ dùng system khi chưa đăng nhập, không thay thế username không hợp lệ.
+
         if (currentUser.isEmpty()) {
             actor = "system";
         }

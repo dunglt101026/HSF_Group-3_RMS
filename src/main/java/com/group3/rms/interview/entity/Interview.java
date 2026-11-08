@@ -20,10 +20,10 @@ import org.hibernate.Length;
 
 import java.time.LocalDateTime;
 
-/** Một vòng phỏng vấn của hồ sơ, kèm đánh giá (rating, feedback) khi đã EVALUATED. */
+
 @Entity
 @Table(name = "interviews",
-        // Mỗi hồ sơ chỉ có một vòng cho mỗi số vòng (DB chặn nếu hai lần lưu đồng thời lọt qua khóa ở service).
+
         uniqueConstraints = @UniqueConstraint(name = "uq_interviews_application_round",
                 columnNames = {"application_id", "round_no"}),
         indexes = @Index(name = "ix_interviews_interviewer_status_time",
@@ -37,19 +37,19 @@ public class Interview extends BaseEntity {
     @JoinColumn(name = "application_id", nullable = false)
     private Application application;
 
-    /** Người phỏng vấn: tài khoản HR hoặc Interviewer. */
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "interviewer_id", nullable = false)
     private User interviewer;
 
-    /** Vòng thứ mấy: 1, 2, 3… */
+
     @Column(name = "round_no", nullable = false)
     private Integer roundNo;
 
     @Column(name = "scheduled_at", nullable = false)
     private LocalDateTime scheduledAt;
 
-    /** Phòng họp hoặc link họp online. */
+
     @Column(length = 500)
     private String location;
 
@@ -57,7 +57,7 @@ public class Interview extends BaseEntity {
     @Column(nullable = false, length = 20)
     private InterviewStatus status = InterviewStatus.SCHEDULED;
 
-    /** 1–5, chỉ có khi đã đánh giá. */
+
     @Column(columnDefinition = "TINYINT")
     private Integer rating;
 

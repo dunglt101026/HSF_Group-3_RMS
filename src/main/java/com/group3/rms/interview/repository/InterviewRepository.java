@@ -20,13 +20,13 @@ import java.util.Optional;
 
 public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
-    /** Các vòng của một hồ sơ, theo thứ tự vòng. */
+
     List<Interview> findByApplicationIdOrderByRoundNoAsc(Long applicationId);
 
-    /**
-     * Đếm số vòng phỏng vấn của nhiều hồ sơ trong một truy vấn — SCR-12 (UC-15).
-     * Bổ sung read-only theo quyết định D1.
-     */
+
+
+
+
     @Query("""
             SELECT i.application.id AS applicationId, COUNT(i) AS total
             FROM Interview i
@@ -43,23 +43,23 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
         long getTotal();
     }
 
-    /** UC-21: các vòng của hồ sơ kèm người phỏng vấn, để hiện bảng ở SCR-17. */
+
     @EntityGraph(attributePaths = "interviewer")
     List<Interview> findWithInterviewerByApplicationIdOrderByRoundNoAsc(Long applicationId);
 
-    // ===== UC-24: lịch phỏng vấn của tôi — tải sẵn hồ sơ, tin, ứng viên để hiển thị bảng =====
 
-    /** Tab "Sắp tới": chưa tới giờ, gần nhất trước. */
+
+
     @EntityGraph(attributePaths = {"application", "application.job", "application.candidate"})
     List<Interview> findByInterviewerIdAndStatusAndScheduledAtAfterOrderByScheduledAtAsc(
             Long interviewerId, InterviewStatus status, LocalDateTime now);
 
-    /** Tab "Cần đánh giá": đã tới giờ nhưng chưa đánh giá, buổi cũ nhất trước. */
+
     @EntityGraph(attributePaths = {"application", "application.job", "application.candidate"})
     List<Interview> findByInterviewerIdAndStatusAndScheduledAtLessThanEqualOrderByScheduledAtAsc(
             Long interviewerId, InterviewStatus status, LocalDateTime now);
 
-    /** Tab "Đã đánh giá": buổi mới nhất trước. */
+
     @EntityGraph(attributePaths = {"application", "application.job", "application.candidate"})
     List<Interview> findByInterviewerIdAndStatusOrderByScheduledAtDesc(Long interviewerId, InterviewStatus status);
 
@@ -70,15 +70,15 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
     long countByInterviewerIdAndStatus(Long interviewerId, InterviewStatus status);
 
-    // ===== UC-23: lên lịch phỏng vấn =====
 
-    /** Số vòng hiện có của hồ sơ; vòng mới = số này + 1. */
+
+
     long countByApplicationId(Long applicationId);
 
-    /**
-     * Danh sách người có thể được giao phỏng vấn: tài khoản đang hoạt động, vai trò HR hoặc Interviewer,
-     * sắp theo tên. Chỉ đọc bảng users (không ghi), nên đặt ở đây để không sửa repository của chức năng user.
-     */
+
+
+
+
     @Query("""
             select new com.group3.rms.interview.dto.InterviewerOptionResponse(u.id, u.fullName, r.code)
             from User u join u.roles r
@@ -88,7 +88,7 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
     List<InterviewerOptionResponse> findAssignableInterviewers(@Param("status") UserStatus status,
                                                                @Param("roles") Collection<RoleCode> roles);
 
-    /** Kiểm tra lại người phỏng vấn được chọn khi lưu (có thể vừa bị khóa / đổi vai trò). */
+
     @Query("""
             select u from User u join u.roles r
             where u.id = :id and u.status = :status and r.code in :roles
@@ -97,13 +97,13 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
                                              @Param("status") UserStatus status,
                                              @Param("roles") Collection<RoleCode> roles);
 
-    // ===== UC-25: đánh giá phỏng vấn =====
 
-    /** Màn đánh giá: tải sẵn hồ sơ, tin, ứng viên và người phỏng vấn. */
+
+
     @EntityGraph(attributePaths = {"application", "application.job", "application.candidate", "interviewer"})
     Optional<Interview> findForEvaluationById(Long id);
 
-    /** Khóa buổi phỏng vấn khi gửi đánh giá, tránh gửi hai lần đồng thời. */
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from Interview i where i.id = :id")
     Optional<Interview> findByIdForUpdate(@Param("id") Long id);

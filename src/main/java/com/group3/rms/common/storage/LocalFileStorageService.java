@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
-/** Lưu CV trên ổ đĩa máy chủ, trong thư mục cấu hình {@code app.storage.cv-dir}. */
+
 @Slf4j
 @Service
 public class LocalFileStorageService implements FileStorageService {
@@ -26,7 +26,7 @@ public class LocalFileStorageService implements FileStorageService {
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "doc", "docx");
     private static final long MAX_SIZE_BYTES = 5L * 1024 * 1024;
     private static final String CV_FIELD = "cvFile";
-    /** CV của dữ liệu mẫu (database/seed.sql) có đường dẫn "seed/<tên file>", đọc từ thư mục CV mẫu trong classpath. */
+
     private static final String SAMPLE_PREFIX = "seed/";
     private static final String SAMPLE_CLASSPATH_DIR = "static/sample/cv/";
 
@@ -50,7 +50,7 @@ public class LocalFileStorageService implements FileStorageService {
             throw new BusinessException(CV_FIELD, "CV không được vượt quá 5 MB.");
         }
 
-        // Không dùng tên file của người dùng trên ổ đĩa, tránh trùng tên và tấn công qua đường dẫn.
+
         String storedName = UUID.randomUUID() + "." + extension.toLowerCase(Locale.ROOT);
         try (InputStream input = file.getInputStream()) {
             Files.createDirectories(rootDir);
@@ -75,7 +75,7 @@ public class LocalFileStorageService implements FileStorageService {
         throw new BusinessException("File CV không còn trên máy chủ.");
     }
 
-    /** Chỉ nhận tên file đơn giản sau "seed/", không cho đi lên thư mục khác. */
+
     private Resource loadSampleCv(String cvPath) {
         if (cvPath == null || !cvPath.startsWith(SAMPLE_PREFIX)) {
             return null;
@@ -101,7 +101,7 @@ public class LocalFileStorageService implements FileStorageService {
         }
     }
 
-    /** Trả về null nếu đường dẫn trống hoặc trỏ ra ngoài thư mục lưu CV. */
+
     private Path resolveInsideRoot(String cvPath) {
         if (cvPath == null || cvPath.isBlank()) {
             return null;

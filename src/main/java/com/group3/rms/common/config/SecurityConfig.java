@@ -30,12 +30,12 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 
-/**
- * Cấu hình Spring Security cho Sprint 3.
- * <p>
- * Chiến lược: giữ nguyên flow login thủ công qua AuthController,
- * Spring Security chịu trách nhiệm bảo vệ URL theo role và quản lý session.
- */
+
+
+
+
+
+
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -51,39 +51,39 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // ── Session Sync (UC-08, UC-09) ────────────────────────────────
+
             .addFilterAfter(new UserSessionSyncFilter(userRepository, currentUserService), SecurityContextHolderFilter.class)
 
-            // ── Authorization ──────────────────────────────────────────────
+
             .authorizeHttpRequests(auth -> auth
-                // Static resources & public pages
+
                 .requestMatchers(
                     "/css/**", "/js/**", "/images/**", "/webjars/**",
                     "/favicon.ico", "/error", "/error/**"
                 ).permitAll()
-                // Auth pages
+
                 .requestMatchers("/login", "/register").permitAll()
-                // Việc làm công khai (UC-16, UC-17)
+
                 .requestMatchers(HttpMethod.GET, "/jobs", "/jobs/*").permitAll()
-                // Chỉ Candidate: nộp hồ sơ, hồ sơ của tôi (UC-18, UC-19, UC-20)
+
                 .requestMatchers("/jobs/*/apply", "/my/**").hasRole("CANDIDATE")
-                // Admin only
+
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // HR only
+
                 .requestMatchers("/hr/**").hasRole("HR")
-                // Xử lý hồ sơ ứng tuyển (UC-21, UC-22)
+
                 .requestMatchers("/applications/**").hasAnyRole("HR", "INTERVIEWER")
-                // Interviewer và HR (UC-24: lịch phỏng vấn, service chặn Admin)
+
                 .requestMatchers("/interviews/**").hasAnyRole("INTERVIEWER", "HR")
-                // Any authenticated user
+
                 .requestMatchers("/profile/**").authenticated()
-                // Trang chủ ứng viên
+
                 .requestMatchers("/").permitAll()
-                // Everything else requires login
+
                 .anyRequest().authenticated()
             )
 
-            // ── Form Login ─────────────────────────────────────────────────
+
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
@@ -94,7 +94,7 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            // ── Logout ─────────────────────────────────────────────────────
+
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessHandler(logoutSuccessHandler())
@@ -103,7 +103,7 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            // ── Exception Handling ─────────────────────────────────────────
+
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.sendRedirect(request.getContextPath() + "/login");
@@ -114,17 +114,17 @@ public class SecurityConfig {
                 })
             )
 
-            // ── UserDetailsService & PasswordEncoder ───────────────────────
+
             .userDetailsService(userDetailsService);
 
         return http.build();
     }
 
-    /**
-     * Sau khi Spring Security xác thực thành công:
-     * 1. Lưu CurrentUser vào session (tương thích code nghiệp vụ hiện có)
-     * 2. Redirect về "/", HomeController chuyển tiếp theo vai trò
-     */
+
+
+
+
+
     private AuthenticationSuccessHandler authSuccessHandler() {
         return (HttpServletRequest request, HttpServletResponse response, Authentication authentication) -> {
             RmsUserDetails details = (RmsUserDetails) authentication.getPrincipal();
@@ -133,7 +133,7 @@ public class SecurityConfig {
 
             log.info("Người dùng '{}' đăng nhập thành công với vai trò {}", currentUser.username(), currentUser.role());
 
-            // UC-01: Candidate quay lại trang đang xem dở nếu có; nhân viên luôn về trang theo vai trò.
+
             RequestCache requestCache = new HttpSessionRequestCache();
             SavedRequest savedRequest = requestCache.getRequest(request, response);
             if (currentUser.role() == RoleCode.CANDIDATE && savedRequest != null) {
@@ -146,9 +146,9 @@ public class SecurityConfig {
         };
     }
 
-    /**
-     * Khi xác thực thất bại: redirect về /login với thông báo lỗi phù hợp.
-     */
+
+
+
     private AuthenticationFailureHandler authFailureHandler() {
         return (HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) -> {
             String message;
@@ -163,9 +163,9 @@ public class SecurityConfig {
         };
     }
 
-    /**
-     * Sau khi logout: xóa CurrentUser khỏi session, redirect về /login.
-     */
+
+
+
     private LogoutSuccessHandler logoutSuccessHandler() {
         return (HttpServletRequest request, HttpServletResponse response, Authentication authentication) -> {
             currentUserService.clear();

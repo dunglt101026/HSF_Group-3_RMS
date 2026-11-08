@@ -122,7 +122,7 @@ public class HrJobController {
 
                 return "redirect:/hr/jobs/" + createdJob.id();
             } catch (BusinessException e) {
-                // Lỗi nghiệp vụ gắn với một ô: hiện dưới ô, giữ dữ liệu và kỹ năng đã chọn.
+
                 e.applyTo(result);
             }
         }
@@ -139,7 +139,7 @@ public class HrJobController {
             RedirectAttributes redirectAttributes
     ) {
         if (result.hasErrors()) {
-            // Kiểm tra quyền trước khi trả lại form: non-owner → 403, tin CLOSED → thông báo.
+
             return renderEditForm(model, jobService.getJobForEdit(id), form);
         }
 
@@ -147,7 +147,7 @@ public class HrJobController {
             jobService.updateJob(id, form);
         } catch (BusinessException e) {
             e.applyTo(result);
-            // updateJob đã kiểm tra quyền và trạng thái trước khi ném lỗi nghiệp vụ.
+
             return renderEditForm(model, jobService.getJobDetail(id), form);
         }
 

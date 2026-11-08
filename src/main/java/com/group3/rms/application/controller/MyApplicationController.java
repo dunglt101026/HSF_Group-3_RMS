@@ -28,7 +28,7 @@ public class MyApplicationController {
 
     private final CandidateApplicationService candidateApplicationService;
 
-    // SCR-16: Hồ sơ ứng tuyển của tôi (UC-19).
+
     @GetMapping
     public String myApplications(@RequestParam(required = false) String status, Model model) {
         model.addAttribute("list", candidateApplicationService.getMyApplications(parseStatus(status)));
@@ -36,7 +36,7 @@ public class MyApplicationController {
         return "application/my-list";
     }
 
-    // UC-20: Rút hồ sơ. Vi phạm quy tắc → BusinessException, GlobalExceptionHandler đưa lỗi về trang trước.
+
     @PostMapping("/{id}/withdraw")
     public String withdraw(@PathVariable Long id, RedirectAttributes ra) {
         candidateApplicationService.withdraw(id);
@@ -44,7 +44,7 @@ public class MyApplicationController {
         return "redirect:/my/applications";
     }
 
-    // Bổ sung ngoài đặc tả: xem lại CV đã nộp. PDF mở ngay trên trình duyệt, DOC/DOCX được tải về.
+
     @GetMapping("/{id}/cv")
     public ResponseEntity<Resource> viewCv(@PathVariable Long id) {
         CvFileResponse cv = candidateApplicationService.getMyCv(id);
@@ -57,7 +57,7 @@ public class MyApplicationController {
                 .body(cv.file());
     }
 
-    /** Tab trạng thái bị sửa tay thành giá trị sai trên URL → hiện tab "Tất cả" thay vì trang lỗi. */
+
     private ApplicationStatus parseStatus(String status) {
         if (status == null || status.isBlank()) {
             return null;

@@ -25,14 +25,14 @@ public class ApplicationReviewController {
 
     private final ApplicationReviewService applicationReviewService;
 
-    // SCR-17: Chi tiết hồ sơ (UC-21).
+
     @GetMapping("/{id}")
     public String detail(@PathVariable Long id, Model model) {
         model.addAttribute("app", applicationReviewService.getDetail(id));
         return "application/detail";
     }
 
-    // UC-21: Tải CV, tên file tải về là tên gốc ứng viên đã nộp.
+
     @GetMapping("/{id}/cv")
     public ResponseEntity<Resource> downloadCv(@PathVariable Long id) {
         CvFileResponse cv = applicationReviewService.downloadCv(id);
@@ -45,7 +45,7 @@ public class ApplicationReviewController {
                 .body(cv.file());
     }
 
-    // UC-22: Duyệt hồ sơ. Vi phạm quy tắc → BusinessException, GlobalExceptionHandler đưa lỗi về trang trước.
+
     @PostMapping("/{id}/approve")
     public String approve(@PathVariable Long id, RedirectAttributes ra) {
         applicationReviewService.approve(id);
@@ -53,7 +53,7 @@ public class ApplicationReviewController {
         return "redirect:/applications/" + id;
     }
 
-    // UC-22: Loại hồ sơ.
+
     @PostMapping("/{id}/reject")
     public String reject(@PathVariable Long id, RedirectAttributes ra) {
         applicationReviewService.reject(id);
@@ -61,7 +61,7 @@ public class ApplicationReviewController {
         return "redirect:/applications/" + id;
     }
 
-    // UC-22: Tuyển.
+
     @PostMapping("/{id}/hire")
     public String hire(@PathVariable Long id, RedirectAttributes ra) {
         applicationReviewService.hire(id);

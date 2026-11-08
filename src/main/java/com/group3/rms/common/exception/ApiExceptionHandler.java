@@ -50,7 +50,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleUnexpected(Exception e) {
-        // Giữ status và header của Spring (ví dụ: thiếu tham số, sai HTTP method).
+
         if (e instanceof ErrorResponse error && error.getStatusCode().is4xxClientError()) {
             ProblemDetail problem = createProblem(error.getStatusCode(),
                     "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại dữ liệu gửi lên.");

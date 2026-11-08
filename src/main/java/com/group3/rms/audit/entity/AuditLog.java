@@ -16,7 +16,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-/** Nhật ký hoạt động: chỉ thêm, không sửa, không xóa. Ghi qua AuditLogService, không gọi repository trực tiếp. */
+
 @Entity
 @Table(name = "audit_logs", indexes = @Index(name = "ix_audit_logs_created_at", columnList = "created_at"))
 @Getter
@@ -28,7 +28,7 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /** Tên đăng nhập người thực hiện, hoặc "system". */
+
     @Column(nullable = false, length = 50)
     private String actor;
 

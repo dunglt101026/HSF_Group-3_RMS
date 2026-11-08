@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-/** Trang chủ "/": Guest và Candidate sang trang việc làm, nhân viên về trang theo vai trò. */
+
 @Controller
 @RequiredArgsConstructor
 public class HomeController {
@@ -20,7 +20,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model, RedirectAttributes attributes) {
-        // GlobalExceptionHandler có thể đưa lỗi về "/", giữ thông báo qua lần chuyển hướng tiếp theo.
+
         Object error = model.getAttribute("error");
         if (error != null) {
             attributes.addFlashAttribute("error", error);
@@ -38,7 +38,7 @@ public class HomeController {
         return "redirect:" + target;
     }
 
-    // Spring Security chuyển tiếp cả yêu cầu POST bị từ chối đến đây.
+
     @RequestMapping("/error/403")
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public String error403() {

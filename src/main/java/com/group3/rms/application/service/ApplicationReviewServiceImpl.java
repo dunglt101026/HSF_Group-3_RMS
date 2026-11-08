@@ -39,7 +39,7 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class ApplicationReviewServiceImpl implements ApplicationReviewService {
 
-    /** Sơ đồ trạng thái hồ sơ phía HR (mục 4 tài liệu đặc tả). WITHDRAWN do Candidate thực hiện (UC-20). */
+
     private static final Map<ApplicationStatus, Set<ApplicationStatus>> HR_TRANSITIONS = Map.of(
             ApplicationStatus.APPLIED, Set.of(ApplicationStatus.INTERVIEW, ApplicationStatus.REJECTED),
             ApplicationStatus.INTERVIEW, Set.of(ApplicationStatus.HIRED, ApplicationStatus.REJECTED)
@@ -53,7 +53,7 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
     private final AuditLogService auditLogService;
     private final FileStorageService fileStorageService;
 
-    // UC-21: Xem chi tiết hồ sơ.
+
     @Override
     public ApplicationDetailResponse getDetail(Long applicationId) {
         CurrentUser user = requireReviewer();
@@ -69,7 +69,7 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
         List<InterviewRoundResponse> rounds = interviews.stream()
                 .map(interview -> interviewMapper.toRound(
                         interview,
-                        // HR thấy mọi đánh giá; người phỏng vấn chỉ thấy đánh giá của chính mình.
+
                         hrViewer || InterviewRules.isAssignedTo(interview, user.id()),
                         InterviewRules.canEvaluate(interview, user.id(), now)))
                 .toList();
@@ -77,7 +77,7 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
         return applicationMapper.toDetail(application, rounds, buildActions(application, user));
     }
 
-    // UC-21: Tải CV.
+
     @Override
     public CvFileResponse downloadCv(Long applicationId) {
         CurrentUser user = requireReviewer();
@@ -89,21 +89,21 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
         return new CvFileResponse(fileStorageService.load(application.getCvPath()), application.getCvOriginalName());
     }
 
-    // UC-22: Duyệt hồ sơ.
+
     @Override
     @Transactional
     public void approve(Long applicationId) {
         changeStatus(applicationId, ApplicationStatus.INTERVIEW);
     }
 
-    // UC-22: Loại hồ sơ.
+
     @Override
     @Transactional
     public void reject(Long applicationId) {
         changeStatus(applicationId, ApplicationStatus.REJECTED);
     }
 
-    // UC-22: Tuyển.
+
     @Override
     @Transactional
     public void hire(Long applicationId) {
@@ -155,7 +155,7 @@ public class ApplicationReviewServiceImpl implements ApplicationReviewService {
         return user;
     }
 
-    /** Mọi HR xem được mọi hồ sơ; người phỏng vấn chỉ xem hồ sơ có buổi phỏng vấn của mình. */
+
     private void requireCanView(CurrentUser user, List<Interview> interviews) {
         if (user.role() != RoleCode.HR
                 && interviews.stream().noneMatch(i -> InterviewRules.isAssignedTo(i, user.id()))) {

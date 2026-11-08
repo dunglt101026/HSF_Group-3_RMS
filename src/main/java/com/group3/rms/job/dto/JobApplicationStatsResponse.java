@@ -4,10 +4,10 @@ import com.group3.rms.application.entity.ApplicationStatus;
 
 import java.util.Map;
 
-/**
- * Số hồ sơ của một tin theo từng trạng thái — dùng cho SCR-11, SCR-12.
- * "Tất cả" bao gồm cả hồ sơ đã rút (WITHDRAWN).
- */
+
+
+
+
 public record JobApplicationStatsResponse(
         long total,
         long applied,

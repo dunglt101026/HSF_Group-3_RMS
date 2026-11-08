@@ -24,7 +24,7 @@ public class InterviewController {
 
     private final InterviewService interviewService;
 
-    // SCR-18: Lên lịch phỏng vấn (UC-23).
+
     @GetMapping("/applications/{applicationId}/interviews/new")
     public String scheduleForm(@PathVariable Long applicationId, Model model) {
         model.addAttribute("scheduleForm", interviewService.getScheduleForm(applicationId));
@@ -59,7 +59,7 @@ public class InterviewController {
         }
     }
 
-    // SCR-19: Lịch phỏng vấn của tôi (UC-24).
+
     @GetMapping("/interviews/my")
     public String mySchedule(
             @RequestParam(required = false) String tab,
@@ -69,7 +69,7 @@ public class InterviewController {
         return "interview/my-schedule";
     }
 
-    /** Giá trị tab sai hoặc thiếu thì mở tab "Sắp tới" thay vì trả trang trắng 400. */
+
     private static MyInterviewTab parseTab(String tab) {
         if (tab != null) {
             for (MyInterviewTab candidate : MyInterviewTab.values()) {
@@ -81,13 +81,13 @@ public class InterviewController {
         return MyInterviewTab.UPCOMING;
     }
 
-    // SCR-20: Đánh giá phỏng vấn (UC-25).
+
     @GetMapping("/interviews/{id}/evaluation")
     public String evaluationForm(@PathVariable Long id, Model model, RedirectAttributes ra) {
         try {
             model.addAttribute("evaluation", interviewService.getEvaluation(id));
         } catch (BusinessException e) {
-            // Chưa tới giờ / hồ sơ đã kết thúc → quay về lịch kèm lý do.
+
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/interviews/my";
         }

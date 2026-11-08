@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ModelAndView handleUnexpected(Exception e, HttpServletRequest request, HttpServletResponse response) {
         HttpStatusCode clientErrorStatus = null;
-        // ResponseStatusException cũng thuộc ErrorResponse.
+
         if (e instanceof ErrorResponse error && error.getStatusCode().is4xxClientError()) {
             clientErrorStatus = error.getStatusCode();
             error.getHeaders().forEach((name, values) -> {
@@ -71,7 +71,7 @@ public class GlobalExceptionHandler {
                         "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại dữ liệu gửi lên.", request);
             }
 
-            // Kết thúc phản hồi với status gốc, không đưa chi tiết exception ra trang lỗi mặc định.
+
             response.setStatus(clientErrorStatus.value());
             return new ModelAndView();
         }
@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
 
             JacksonJsonView view = new JacksonJsonView();
             view.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
-            // Chỉ xuất thông tin lỗi, không đưa các thuộc tính model khác vào JSON.
+
             view.setModelKey("problem");
             view.setExtractValueFromSingleKeyModel(true);
 
@@ -140,7 +140,7 @@ public class GlobalExceptionHandler {
                 return "/";
             }
 
-            // Spring tự thêm context path khi xử lý redirect bắt đầu bằng "/".
+
             path = path.substring(contextPath.length());
             if (path.isEmpty() || path.equals("/")) {
                 return "/";
@@ -152,7 +152,7 @@ public class GlobalExceptionHandler {
                     || decodedPath.chars().anyMatch(Character::isISOControl)) {
                 return "/";
             }
-            // Chặn đường dẫn đi ra ngoài ứng dụng, kể cả khi dấu chấm được mã hóa.
+
             for (String part : decodedPath.split("/")) {
                 if (part.equals(".") || part.equals("..")) {
                     return "/";
@@ -165,7 +165,7 @@ public class GlobalExceptionHandler {
             }
             return path;
         } catch (URISyntaxException e) {
-            // Referer sai định dạng thì về trang chủ.
+
             return "/";
         }
     }

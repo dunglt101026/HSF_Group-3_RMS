@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Kỹ năng, nạp sẵn bằng seed.sql. */
+
 @Entity
 @Table(name = "skills")
 @Getter

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/** Form SCR-20: điểm 1–5 và nhận xét, đều bắt buộc (UC-25). */
+
 public record InterviewEvaluationRequest(
 
         @NotNull(message = "Vui lòng chọn điểm đánh giá.")

@@ -17,10 +17,10 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Mọi tài khoản: Admin, HR, Interviewer, Candidate — phân biệt bằng vai trò.
- * Nghiệp vụ: mỗi tài khoản có đúng một vai trò, nhưng lưu qua bảng nối user_roles (@ManyToMany).
- */
+
+
+
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -34,7 +34,7 @@ public class User extends BaseEntity {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    /** Mật khẩu đã băm BCrypt, không bao giờ lưu mật khẩu gốc. */
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 

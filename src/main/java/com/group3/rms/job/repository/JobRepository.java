@@ -19,8 +19,8 @@ import java.util.Optional;
 public interface JobRepository extends JpaRepository<Job, Long>,
         JpaSpecificationExecutor<Job> {
 
-    // Lấy danh sách tin có phân trang.
-    // Tải sẵn phòng ban và HR phụ trách để tránh truy vấn lặp.
+
+
     @Override
     @EntityGraph(attributePaths = {"department", "owner"})
     Page<Job> findAll(
@@ -28,7 +28,7 @@ public interface JobRepository extends JpaRepository<Job, Long>,
             Pageable pageable
     );
 
-    // Lấy chi tiết tin, bao gồm phòng ban, HR phụ trách và kỹ năng.
+
     @EntityGraph(attributePaths = {
             "department",
             "owner",
@@ -41,7 +41,7 @@ public interface JobRepository extends JpaRepository<Job, Long>,
             LocalDate deadline
     );
 
-    // UC-16: các địa điểm của tin đang tuyển, để hiện trong ô lọc địa điểm.
+
     @Query("""
             select distinct j.location from Job j
             where j.status = :status and j.deleted = false and j.location is not null

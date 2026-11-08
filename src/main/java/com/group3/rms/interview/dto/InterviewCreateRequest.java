@@ -8,7 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/** Form SCR-18: lên lịch một vòng phỏng vấn (UC-23). */
+
 public record InterviewCreateRequest(
 
         @NotNull(message = "Vui lòng chọn người phỏng vấn.")

@@ -8,7 +8,7 @@
     <title>Đánh giá phỏng vấn</title>
     <th:block layout:fragment="styles">
         <style>
-            /* Chọn sao: radio ẩn, nhãn là ngôi sao; hiển thị ngược để tô sáng các sao bên trái sao được chọn */
+
             .star-rating {
                 display: inline-flex;
                 flex-direction: row-reverse;
@@ -62,7 +62,7 @@
                 <i class="bi bi-star me-2"></i>Đánh giá phỏng vấn
             </h1>
 
-            <!-- Thông tin buổi phỏng vấn (chỉ đọc) -->
+
             <div class="card mb-4">
                 <div class="card-body p-4">
                     <dl class="row gy-2 mb-0">
@@ -89,7 +89,7 @@
                 </div>
             </div>
 
-            <!-- Đã đánh giá → chỉ đọc -->
+
             <div th:if="${evaluation.evaluated()}" class="card">
                 <div class="card-body p-4">
                     <div class="alert alert-success">
@@ -108,7 +108,7 @@
                 </div>
             </div>
 
-            <!-- Chưa đánh giá → form -->
+
             <div th:unless="${evaluation.evaluated()}" class="card">
                 <div class="card-body p-4">
                     <form th:action="@{/interviews/{id}/evaluation(id=${evaluation.id})}"
